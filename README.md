@@ -41,7 +41,7 @@ To see the progress, you can sniff the network, to catch the block it is archivi
 
 Check your `LOOPBACK` network interface.
 
-For example on macOS with `ifconfig -a` and on CentOS with `ip link show` and modify the ``-i` parameter in `sniff_getblockhash.sh` according to your `LOOPBACK` network interface.
+For example on macOS with `ifconfig -a` and on CentOS with `ip link show` and modify the `-i` parameter in [sniff_getblockhash.sh](sniff_getblockhash.sh) according to your `LOOPBACK` network interface.
 
 ```
 $ . sniff_getblockhash.sh
