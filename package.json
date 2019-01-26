@@ -11,7 +11,6 @@
   "dependencies": {
     "better-sqlite3": "^5.3.0",
     "bitcoin-core": "^2.0.0",
-    "sqlite3": "^4.0.4",
     "xo": "^0.23.0"
   }
 }
