@@ -1,6 +1,6 @@
 # Minimal Bitcoin Explorer
 
-* [Installation](#nistallation)
+* [Installation](#installation)
 * [Configuration](#configuration)
 * [Run](#run)
 * [Sniffing](#sniffing)
