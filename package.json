@@ -1,0 +1,17 @@
+{
+  "name": "minimal-bitcoin-explorer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "explore.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Isidoro Ghezzi",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^5.3.0",
+    "bitcoin-core": "^2.0.0",
+    "sqlite3": "^4.0.4",
+    "xo": "^0.23.0"
+  }
+}
