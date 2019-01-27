@@ -14,6 +14,7 @@ The stage is to be considered experimental, and collected data still need valida
 $ npm install
 $ sqlite3 explore.sqlite < sql/explore_createdb.sql
 $ sqlite3 explore.sqlite < sql/vv_utxo_address_hex.sql
+$ sqlite3 explore.sqlite < sql/vv_utxo_hex.sql
 ```
 the following `npm` dependencies will be installed:
 * better-sqlite3
