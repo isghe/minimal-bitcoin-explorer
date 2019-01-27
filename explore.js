@@ -53,7 +53,7 @@ const db = {
 			.run(deltaSatoshi, hex, hex);
 	},
 	selectVout: (txid, vout) => {
-		return explore.db.prepare('select id, address, value from vv_utxo_address_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
+		return explore.db.prepare('select id, hex, address, value from vv_utxo_address_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 	},
 	updateUtxoSpent: id => {
@@ -102,7 +102,7 @@ const main = async () => {
 	explore.db = new BetterSqlite3('explore.sqlite');
 
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
-	// top 91841
+
 	for (let i = 0 + 1; i <= 200000; ++i) {
 		db.beginTransaction();
 		const blockHash = await explore.bc.getBlockHash(i);
