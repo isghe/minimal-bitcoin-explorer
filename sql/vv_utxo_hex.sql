@@ -1,4 +1,4 @@
-drop view vv_utxo_address_hex;
+drop view vv_utxo_hex;
 
 create view vv_utxo_hex
 as
