@@ -49,11 +49,12 @@ const db = {
 	},
 
 	updateHex: (hex, deltaSatoshi) => {
+		assert(hex);
 		explore.db.prepare('update hex set satoshi = (select satoshi + ? from hex where hex = ?) where hex = ?')
 			.run(deltaSatoshi, hex, hex);
 	},
 	selectVout: (txid, vout) => {
-		return explore.db.prepare('select id, hex, address, value from vv_utxo_address_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
+		return explore.db.prepare('select id, hex, value from vv_utxo_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 	},
 	updateUtxoSpent: id => {
