@@ -19,6 +19,10 @@ const db = {
 		explore.db.prepare('commit')
 			.run();
 	},
+	selectLastBlock: () => {
+		return explore.db.prepare('select max (blockid) as lastBlockID from block')
+			.get();
+	},
 	insertBlock: (index, hash) => {
 		return explore.db.prepare('insert into block(blockid, hash) values (?, ?)')
 			.run(index, hash);
@@ -103,8 +107,8 @@ const main = async () => {
 	explore.db = new BetterSqlite3('explore.sqlite');
 
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
-
-	for (let i = 0 + 1; i <= 200000; ++i) {
+	const lastBlock = db.selectLastBlock();
+	for (let i = lastBlock.lastBlockID + 1; i <= 200000; ++i) {
 		db.beginTransaction();
 		const blockHash = await explore.bc.getBlockHash(i);
 		const insertBlockResult = db.insertBlock(i, blockHash);
