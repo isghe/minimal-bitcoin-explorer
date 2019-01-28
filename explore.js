@@ -58,6 +58,7 @@ const db = {
 		return info;
 	},
 	upsertHex: (hex, spk_type_ref, satoshi) => {
+		assertSatoshi(satoshi);
 		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
 			'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
 			.run(hex, satoshi, hex, satoshi, hex);
@@ -79,6 +80,7 @@ const db = {
 	},
 	updateHex: (hex, satoshi) => {
 		assert(hex);
+		assertSatoshi(satoshi);
 		const info = explore.db.prepare('update hex set satoshi = ? where hex = ?')
 			.run(satoshi, hex);
 		assert(info.changes === 1);
@@ -89,6 +91,7 @@ const db = {
 			'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 		assert(ret);
+		assertSatoshi(ret.satoshi);
 		return ret;
 	},
 	updateUtxoSpent: id => {
@@ -99,8 +102,15 @@ const db = {
 	}
 };
 
+const assertSatoshi = satoshi => {
+	assert(Number.isInteger(satoshi));
+};
+
 const valueToSatoshi = bitcoin => {
-	return bitcoin * 100000000;
+	// 32.91*100000000 = 3290999999.9999995!!!
+	const satoshi = Math.round(bitcoin * 100000000);
+	assertSatoshi(satoshi);
+	return satoshi;
 };
 
 const handleTransaction = (raw, block_ref) => {
