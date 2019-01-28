@@ -3,4 +3,5 @@ configuration.js
 explore.sqlite
 package-lock.json
 .vscode
+explore.log
 

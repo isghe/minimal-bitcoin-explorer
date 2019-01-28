@@ -56,8 +56,8 @@ const db = {
 		return info;
 	},
 	upsertHex: (hex, spk_type_ref, satoshi) => {
-		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?)')
-			.run(hex, satoshi, hex);
+		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
+			.run(hex, satoshi, hex, satoshi, hex);
 		assert(info.changes === 1);
 		return info;
 	},
@@ -67,15 +67,22 @@ const db = {
 		assert(info.changes === 1);
 		return info;
 	},
-	updateHex: (hex, deltaSatoshi) => {
+	updateHexDelta: (hex, deltaSatoshi) => {
 		assert(hex);
 		const info = explore.db.prepare('update hex set satoshi = (select satoshi + ? from hex where hex = ?) where hex = ?')
 			.run(deltaSatoshi, hex, hex);
 		assert(info.changes === 1);
 		return info;
 	},
+	updateHex: (hex, satoshi) => {
+		assert(hex);
+		const info = explore.db.prepare('update hex set satoshi = ? where hex = ?')
+			.run(satoshi, hex);
+		assert(info.changes === 1);
+		return info;
+	},
 	selectVout: (txid, vout) => {
-		const ret = explore.db.prepare('select id, hex, value from vv_utxo_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
+		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 		assert(ret);
 		return ret;
@@ -115,7 +122,8 @@ const handleTransaction = (raw, block_ref) => {
 		if (!vin.coinbase) {
 			const voutFound = db.selectVout(vin.txid, vin.vout);
 			assert(voutFound);
-			db.updateHex(voutFound.hex, -valueToSatoshi(voutFound.value));
+			assert(voutFound.satoshi - valueToSatoshi(voutFound.value) >= 0);
+			db.updateHex(voutFound.hex, voutFound.satoshi - valueToSatoshi(voutFound.value));
 			db.updateUtxoSpent(voutFound.id);
 		}
 	});
@@ -125,7 +133,11 @@ const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
 	const BetterSqlite3 = require('better-sqlite3');
-	explore.db = new BetterSqlite3('explore.sqlite');
+	explore.db = new BetterSqlite3('explore.sqlite'/* , {
+		verbose: (query) =>{
+			console.log (JSON.stringify ({query}));
+		}
+	} */);
 
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	const lastBlock = db.selectLastBlock();
