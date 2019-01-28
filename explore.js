@@ -44,19 +44,22 @@ const db = {
 		return info;
 	},
 	upsertSpkType: type => {
-		const info = explore.db.prepare('insert into spk_type (description, counter) values (?, 1) ON CONFLICT(description) DO UPDATE SET counter = (select counter + 1 from spk_type where description = ?)')
+		const info = explore.db.prepare('insert into spk_type (description, counter) values (?, 1) '
+			+ 'ON CONFLICT(description) DO UPDATE SET counter = (select counter + 1 from spk_type where description = ?)')
 			.run(type, type);
 		assert(info.changes === 1);
 		return info;
 	},
 	upsertAddress: (text, hex_ref) => {
-		const info = explore.db.prepare('insert into address(address, hex_ref, counter) values (?, (' + hex_ref + '),1) ON CONFLICT(address) DO UPDATE SET counter = (select counter + 1 from address where address = ?)')
+		const info = explore.db.prepare('insert into address(address, hex_ref, counter) values (?, (' + hex_ref + '),1) '
+			+ 'ON CONFLICT(address) DO UPDATE SET counter = (select counter + 1 from address where address = ?)')
 			.run(text, text);
 		assert(info.changes === 1);
 		return info;
 	},
 	upsertHex: (hex, spk_type_ref, satoshi) => {
-		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
+		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) '
+			+ 'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
 			.run(hex, satoshi, hex, satoshi, hex);
 		assert(info.changes === 1);
 		return info;
@@ -82,7 +85,8 @@ const db = {
 		return info;
 	},
 	selectVout: (txid, vout) => {
-		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
+		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex '
+			+ 'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 		assert(ret);
 		return ret;
