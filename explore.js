@@ -20,8 +20,10 @@ const db = {
 			.run();
 	},
 	selectLastBlock: () => {
-		return explore.db.prepare('select max (blockid) as lastBlockID from block')
+		const ret = explore.db.prepare('select max (blockid) as lastBlockID from block')
 			.get();
+		assert(ret);
+		return ret;
 	},
 	insertBlock: (index, hash) => {
 		const info = explore.db.prepare('insert into block(blockid, hash) values (?, ?)')
