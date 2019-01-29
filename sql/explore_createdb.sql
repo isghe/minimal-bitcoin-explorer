@@ -12,8 +12,9 @@ PRAGMA foreign_keys=ON;
 
 create table block(
 	id integer primary key not null,
-	blockid integer unique not null,
+	height integer unique not null,
 	hash text unique not null,
+	nextblockhash text unique not null,
 	created_at DATETIME not null DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -69,5 +70,3 @@ create table address(
 	counter integer not null
 );
 CREATE INDEX 'address_hex_ref' ON 'address'('hex_ref');
-
--- .lint fkey-indexes

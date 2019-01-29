@@ -33,7 +33,7 @@ Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), 
 $ node explore.js
 ```
 The application build the database throw bitcoind's RPC-APIs:
-* `getblockhash`
+* ~~`getblockhash`~~
 * `getblock`
 
 ## Sniffing

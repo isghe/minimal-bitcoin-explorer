@@ -19,15 +19,21 @@ const db = {
 		explore.db.prepare('commit')
 			.run();
 	},
-	selectLastBlock: () => {
-		const ret = explore.db.prepare('select max (blockid) as lastBlockID from block')
+	selectCountBlock: () => {
+		const ret = explore.db.prepare('select count (*) as ts_counter from block')
 			.get();
 		assert(ret);
 		return ret;
 	},
-	insertBlock: (index, hash) => {
-		const info = explore.db.prepare('insert into block(blockid, hash) values (?, ?)')
-			.run(index, hash);
+	selectLastBlock: () => {
+		const ret = explore.db.prepare('select height, hash, nextblockhash from block where height = (select max (height) from block)')
+			.get();
+		assert(ret);
+		return ret;
+	},
+	insertBlock: block => {
+		const info = explore.db.prepare('insert into block(height, hash, nextblockhash) values (?, ?, ?)')
+			.run(block.height, block.hash, block.nextblockhash);
 		assert(info.changes === 1);
 		return info;
 	},
@@ -154,14 +160,19 @@ const main = async () => {
 	} */);
 
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
-	const lastBlock = db.selectLastBlock();
-	for (let i = lastBlock.lastBlockID + 1; i <= 200000; ++i) {
+	let lastBlock = {};
+	if (db.selectCountBlock().ts_counter > 0) {
+		lastBlock = db.selectLastBlock();
+	} else {
+		// genesis block.hash
+		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
+	}
+	for (;;) {
 		db.beginTransaction();
-		const blockHash = await explore.bc.getBlockHash(i);
-		const insertBlockResult = db.insertBlock(i, blockHash);
-		const block = await explore.bc.getBlock(blockHash, 2);
+		lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
+		const insertBlockResult = db.insertBlock(lastBlock);
 
-		block.tx.forEach(raw => {
+		lastBlock.tx.forEach(raw => {
 			handleTransaction(raw, insertBlockResult.lastInsertRowid);
 		});
 		db.commit();
