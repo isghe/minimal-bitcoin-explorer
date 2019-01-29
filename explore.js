@@ -142,8 +142,9 @@ const handleTransaction = (raw, block_ref) => {
 		if (!vin.coinbase) {
 			const voutFound = db.selectVout(vin.txid, vin.vout);
 			assert(voutFound);
-			assert(voutFound.satoshi - valueToSatoshi(voutFound.value) >= 0);
-			db.updateHex(voutFound.hex, voutFound.satoshi - valueToSatoshi(voutFound.value));
+			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
+			assert(satoshi >= 0);
+			db.updateHex(voutFound.hex, satoshi);
 			db.updateUtxoSpent(voutFound.id);
 		}
 	});
