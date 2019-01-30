@@ -22,13 +22,13 @@ const db = {
 	selectCountBlock: () => {
 		const ret = explore.db.prepare('select count (*) as ts_counter from block')
 			.get();
-		assert(ret);
+		assert(typeof ret !== 'undefined');
 		return ret;
 	},
 	selectLastBlock: () => {
 		const ret = explore.db.prepare('select height, hash, nextblockhash from block where height = (select max (height) from block)')
 			.get();
-		assert(ret);
+		assert(typeof ret !== 'undefined');
 		return ret;
 	},
 	insertBlock: block => {
@@ -96,7 +96,7 @@ const db = {
 		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex ' +
 			'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
-		assert(ret);
+		assert(typeof ret !== 'undefined');
 		assertSatoshi(ret.satoshi);
 		return ret;
 	},
@@ -109,10 +109,12 @@ const db = {
 };
 
 const assertSatoshi = satoshi => {
+	assert(typeof satoshi !== 'undefined');
 	assert(Number.isInteger(satoshi));
 };
 
 const valueToSatoshi = bitcoin => {
+	assert(typeof bitcoin !== 'undefined');
 	// 32.91*100000000 = 3290999999.9999995!!!
 	const satoshi = Math.round(bitcoin * 100000000);
 	assertSatoshi(satoshi);
@@ -120,9 +122,12 @@ const valueToSatoshi = bitcoin => {
 };
 
 const handleTransaction = (raw, block_ref) => {
+	assert(typeof raw !== 'undefined');
+	assert(typeof block_ref !== 'undefined');
 	const transaction = db.insertTransaction(raw.txid, block_ref);
 	// console.log (raw);
 	raw.vout.forEach(vout => {
+		assert(typeof vout !== 'undefined');
 		db.upsertSpkType(vout.scriptPubKey.type);
 		const transaction_ref = transaction.lastInsertRowid;
 		const utxo = db.insertUtxo(transaction_ref, vout.n, vout.value);
@@ -141,7 +146,7 @@ const handleTransaction = (raw, block_ref) => {
 	raw.vin.forEach(vin => {
 		if (!vin.coinbase) {
 			const voutFound = db.selectVout(vin.txid, vin.vout);
-			assert(voutFound);
+			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
 			db.updateHex(voutFound.hex, satoshi);
@@ -154,11 +159,12 @@ const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
 	const BetterSqlite3 = require('better-sqlite3');
-	explore.db = new BetterSqlite3('explore.sqlite'/* , {
-		verbose: (query) =>{
-			console.log (JSON.stringify ({query}));
+	explore.db = new BetterSqlite3('explore.sqlite', {
+		verboseNo: query => {
+			assert(typeof query !== 'undefined');
+			console.log(JSON.stringify({query}));
 		}
-	} */);
+	});
 
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	let lastBlock = {};
@@ -171,6 +177,7 @@ const main = async () => {
 	for (;;) {
 		db.beginTransaction();
 		lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
+		assert(typeof lastBlock !== 'undefined');
 		const insertBlockResult = db.insertBlock(lastBlock);
 
 		lastBlock.tx.forEach(raw => {
