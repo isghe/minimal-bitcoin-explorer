@@ -64,6 +64,7 @@ const db = {
 		return info;
 	},
 	upsertHex: (hex, spk_type_ref, satoshi) => {
+		assert(typeof hex !== 'undefined');
 		assertSatoshi(satoshi);
 		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
 			'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
@@ -78,14 +79,14 @@ const db = {
 		return info;
 	},
 	updateHexDelta: (hex, deltaSatoshi) => {
-		assert(hex);
+		assert(typeof hex !== 'undefined');
 		const info = explore.db.prepare('update hex set satoshi = (select satoshi + ? from hex where hex = ?) where hex = ?')
 			.run(deltaSatoshi, hex, hex);
 		assert(info.changes === 1);
 		return info;
 	},
 	updateHex: (hex, satoshi) => {
-		assert(hex);
+		assert(typeof hex !== 'undefined');
 		assertSatoshi(satoshi);
 		const info = explore.db.prepare('update hex set satoshi = ? where hex = ?')
 			.run(satoshi, hex);
