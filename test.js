@@ -11,3 +11,4 @@ assert(!hex);
 assert(typeof hex !== 'undefined');
 assert(typeof hexUndefined === 'undefined');
 
+console.log (typeof undefined);
