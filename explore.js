@@ -156,6 +156,13 @@ const handleTransaction = (raw, block_ref) => {
 	});
 };
 
+const profile = {
+	delta: {
+		rpc: 0,
+		db: 0
+	}
+};
+
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
@@ -175,8 +182,11 @@ const main = async () => {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
+	let dbEnd = new Date();
 	for (;;) {
 		lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
+		const rpcEnd = new Date();
+		profile.delta.rpc += rpcEnd - dbEnd;
 		assert(typeof lastBlock !== 'undefined');
 		db.beginTransaction();
 		const insertBlockResult = db.insertBlock(lastBlock);
@@ -185,6 +195,9 @@ const main = async () => {
 			handleTransaction(raw, insertBlockResult.lastInsertRowid);
 		});
 		db.commit();
+		dbEnd = new Date();
+		profile.delta.db += dbEnd - rpcEnd;
+		console.log ({profile});
 	}
 };
 
