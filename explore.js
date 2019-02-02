@@ -157,6 +157,7 @@ const handleTransaction = (raw, block_ref) => {
 };
 
 const profile = {
+	height: 0,
 	rpc: {
 	// ticks executing RPC call
 		delta: 0,
@@ -179,7 +180,8 @@ const profile = {
 		delta: 0,
 		sigma: 0
 	},
-	delta: 0
+	delta: 0,
+	sigma: 0
 };
 
 const main = async () => {
@@ -212,6 +214,7 @@ const main = async () => {
 			profile.rpc.delta += rpcEnd - dbEnd;
 			assert(typeof lastBlock !== 'undefined');
 
+			profile.height = lastBlock.height;
 			if ((lastBlock.height % 100) === 0) {
 				const date = new Date();
 				const delta = date - lastDate;
@@ -236,11 +239,12 @@ const main = async () => {
 		profile.db.commit.sigma += dbDelta;
 
 		profile.db.query.sigma += profile.db.query.delta;
-		profile.rpc.sigma += profile.db.query.delta;
+		profile.rpc.sigma += profile.rpc.delta;
 		profile.tx.sigma += profile.tx.delta;
 
 		const profileDelta = dbCommitEnd - lastProfile;
 		profile.delta = profileDelta;
+		profile.sigma += profileDelta;
 		lastProfile = dbCommitEnd;
 
 		console.log(JSON.stringify({profile}));
