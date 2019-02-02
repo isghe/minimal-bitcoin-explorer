@@ -158,18 +158,26 @@ const handleTransaction = (raw, block_ref) => {
 
 const profile = {
 	rpc: {
+	// ticks executing RPC call
 		delta: 0,
 		sigma: 0
 	},
 	db: {
 		query: {
+		// ticks executing query on db
 			delta: 0,
 			sigma: 0
 		},
 		commit: {
+		// ticks executing commit on db
 			delta: 0,
 			sigma: 0
 		}
+	},
+	tx: {
+	// number of transactions
+		delta: 0,
+		sigma: 0
 	}
 };
 
@@ -210,7 +218,7 @@ const main = async () => {
 			}
 
 			const insertBlockResult = db.insertBlock(lastBlock);
-
+			profile.tx.delta += lastBlock.tx.length;
 			lastBlock.tx.forEach(raw => {
 				handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
@@ -227,9 +235,11 @@ const main = async () => {
 
 		profile.db.query.sigma += profile.db.query.delta;
 		profile.rpc.sigma += profile.db.query.delta;
+		profile.tx.sigma += profile.tx.delta;
 		console.log(JSON.stringify({profile}));
 		profile.db.query.delta = 0;
 		profile.rpc.delta = 0;
+		profile.tx.delta = 0;
 	}
 };
 
