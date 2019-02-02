@@ -159,7 +159,10 @@ const handleTransaction = (raw, block_ref) => {
 const profile = {
 	delta: {
 		rpc: 0,
-		db: 0
+		db: {
+			query: 0,
+			commit: 0
+		}
 	}
 };
 
@@ -184,20 +187,34 @@ const main = async () => {
 	}
 	let dbEnd = new Date();
 	for (;;) {
-		lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
-		const rpcEnd = new Date();
-		profile.delta.rpc += rpcEnd - dbEnd;
-		assert(typeof lastBlock !== 'undefined');
 		db.beginTransaction();
-		const insertBlockResult = db.insertBlock(lastBlock);
+		let lastDate = new Date();
+		for (let i = 0; i < 10; ++i) {
+			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
+			const rpcEnd = new Date();
+			profile.delta.rpc += rpcEnd - dbEnd;
+			assert(typeof lastBlock !== 'undefined');
 
-		lastBlock.tx.forEach(raw => {
-			handleTransaction(raw, insertBlockResult.lastInsertRowid);
-		});
+			if ((lastBlock.height % 100) === 0) {
+				const date = new Date();
+				const delta = date - lastDate;
+				console.log({height: lastBlock.height, date, delta});
+				lastDate = date;
+			}
+
+			const insertBlockResult = db.insertBlock(lastBlock);
+
+			lastBlock.tx.forEach(raw => {
+				handleTransaction(raw, insertBlockResult.lastInsertRowid);
+			});
+			dbEnd = new Date();
+			profile.delta.db.query += dbEnd - rpcEnd;
+		}
 		db.commit();
-		dbEnd = new Date();
-		profile.delta.db += dbEnd - rpcEnd;
-		console.log ({profile});
+		const dbCommitEnd = new Date();
+		profile.delta.db.commit += dbCommitEnd - dbEnd;
+		dbEnd = dbCommitEnd;
+		console.log(JSON.stringify({profile}));
 	}
 };
 
