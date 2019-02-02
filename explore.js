@@ -178,7 +178,8 @@ const profile = {
 	// number of transactions
 		delta: 0,
 		sigma: 0
-	}
+	},
+	delta: 0
 };
 
 const main = async () => {
@@ -201,7 +202,8 @@ const main = async () => {
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
 	let dbEnd = new Date();
-	let lastDate = new Date();
+	let lastDate = dbEnd;
+	let lastProfile = dbEnd;
 	for (;;) {
 		db.beginTransaction();
 		for (let i = 0; i < 10; ++i) {
@@ -236,7 +238,13 @@ const main = async () => {
 		profile.db.query.sigma += profile.db.query.delta;
 		profile.rpc.sigma += profile.db.query.delta;
 		profile.tx.sigma += profile.tx.delta;
+
+		const profileDelta = dbCommitEnd - lastProfile;
+		profile.delta = profileDelta;
+		lastProfile = dbCommitEnd;
+
 		console.log(JSON.stringify({profile}));
+
 		profile.db.query.delta = 0;
 		profile.rpc.delta = 0;
 		profile.tx.delta = 0;
