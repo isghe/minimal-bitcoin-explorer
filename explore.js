@@ -204,7 +204,6 @@ const main = async () => {
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
 	let dbEnd = new Date();
-	let lastDate = dbEnd;
 	let lastProfile = dbEnd;
 	for (;;) {
 		db.beginTransaction();
@@ -215,12 +214,6 @@ const main = async () => {
 			assert(typeof lastBlock !== 'undefined');
 
 			profile.height = lastBlock.height;
-			if ((lastBlock.height % 100) === 0) {
-				const date = new Date();
-				const delta = date - lastDate;
-				console.log({height: lastBlock.height, date, delta});
-				lastDate = date;
-			}
 
 			const insertBlockResult = db.insertBlock(lastBlock);
 			profile.tx.delta += lastBlock.tx.length;
