@@ -5,4 +5,5 @@ package-lock.json
 .vscode
 explore.log
 nohup.out*
+explore.sqlite-journal
 
