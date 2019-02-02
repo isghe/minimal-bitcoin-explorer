@@ -186,9 +186,9 @@ const main = async () => {
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
 	let dbEnd = new Date();
+	let lastDate = new Date();
 	for (;;) {
 		db.beginTransaction();
-		let lastDate = new Date();
 		for (let i = 0; i < 10; ++i) {
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			const rpcEnd = new Date();
