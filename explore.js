@@ -157,11 +157,18 @@ const handleTransaction = (raw, block_ref) => {
 };
 
 const profile = {
-	delta: {
-		rpc: 0,
-		db: {
-			query: 0,
-			commit: 0
+	rpc: {
+		delta: 0,
+		sigma: 0
+	},
+	db: {
+		query: {
+			delta: 0,
+			sigma: 0
+		},
+		commit: {
+			delta: 0,
+			sigma: 0
 		}
 	}
 };
@@ -192,7 +199,7 @@ const main = async () => {
 		for (let i = 0; i < 10; ++i) {
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			const rpcEnd = new Date();
-			profile.delta.rpc += rpcEnd - dbEnd;
+			profile.rpc.delta += rpcEnd - dbEnd;
 			assert(typeof lastBlock !== 'undefined');
 
 			if ((lastBlock.height % 100) === 0) {
@@ -208,13 +215,21 @@ const main = async () => {
 				handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
 			dbEnd = new Date();
-			profile.delta.db.query += dbEnd - rpcEnd;
+			profile.db.query.delta += dbEnd - rpcEnd;
 		}
 		db.commit();
 		const dbCommitEnd = new Date();
-		profile.delta.db.commit += dbCommitEnd - dbEnd;
+		const dbDelta = dbCommitEnd - dbEnd;
 		dbEnd = dbCommitEnd;
+
+		profile.db.commit.delta = dbDelta;
+		profile.db.commit.sigma += dbDelta;
+
+		profile.db.query.sigma += profile.db.query.delta;
+		profile.rpc.sigma += profile.db.query.delta;
 		console.log(JSON.stringify({profile}));
+		profile.db.query.delta = 0;
+		profile.rpc.delta = 0;
 	}
 };
 
