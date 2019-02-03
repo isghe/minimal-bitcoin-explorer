@@ -181,7 +181,8 @@ const profile = {
 		sigma: 0
 	},
 	delta: 0,
-	sigma: 0
+	sigma: 0,
+	'tx/s': 0
 };
 
 const main = async () => {
@@ -239,6 +240,8 @@ const main = async () => {
 		profile.delta = profileDelta;
 		profile.sigma += profileDelta;
 		lastProfile = dbCommitEnd;
+
+		profile['tx/s'] = 1000 * profile.tx.delta / profile.delta;
 
 		console.log(JSON.stringify({profile}));
 
