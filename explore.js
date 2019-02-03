@@ -69,6 +69,7 @@ const db = {
 		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
 			'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
 			.run(hex, satoshi, hex, satoshi, hex);
+		// console.log (info);
 		assert(info.changes === 1);
 		return info;
 	},
@@ -122,39 +123,12 @@ const valueToSatoshi = bitcoin => {
 	return satoshi;
 };
 
-const handleTransaction = (raw, block_ref) => {
-	assert(typeof raw !== 'undefined');
-	assert(typeof block_ref !== 'undefined');
-	const transaction = db.insertTransaction(raw.txid, block_ref);
-	// console.log (raw);
-	raw.vout.forEach(vout => {
-		assert(typeof vout !== 'undefined');
-		db.upsertSpkType(vout.scriptPubKey.type);
-		const transaction_ref = transaction.lastInsertRowid;
-		const utxo = db.insertUtxo(transaction_ref, vout.n, vout.value);
-		const utxo_ref = utxo.lastInsertRowid;
-		const spk_type_ref = 'select id from spk_type where description=\'' + vout.scriptPubKey.type + '\'';
-		db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, valueToSatoshi(vout.value));
-		const hex_ref = 'select id from hex where hex=\'' + vout.scriptPubKey.hex + '\'';
-		db.insertUtxoHex(utxo_ref, hex_ref);
-		if (vout.scriptPubKey.addresses) {
-			vout.scriptPubKey.addresses.forEach(address => {
-				db.upsertAddress(address, hex_ref);
-			});
-		}
-	});
-
-	raw.vin.forEach(vin => {
-		if (!vin.coinbase) {
-			const voutFound = db.selectVout(vin.txid, vin.vout);
-			assert(typeof voutFound !== 'undefined');
-			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
-			assert(satoshi >= 0);
-			db.updateHex(voutFound.hex_id, satoshi);
-			db.updateUtxoSpent(voutFound.id);
-		}
-	});
-};
+function Crono() {
+	this.fStart = new Date();
+	this.delta = () => {
+		return new Date() - this.fStart;
+	};
+}
 
 const profile = {
 	height: 0,
@@ -173,6 +147,14 @@ const profile = {
 		// ticks executing commit on db
 			delta: 0,
 			sigma: 0
+		},
+		vout: {
+			delta: 0,
+			sigma: 0
+		},
+		vin: {
+			delta: 0,
+			sigma: 0
 		}
 	},
 	tx: {
@@ -186,12 +168,47 @@ const profile = {
 	'tx/s': 0
 };
 
-function Crono() {
-	this.fStart = new Date();
-	this.delta = () => {
-		return new Date() - this.fStart;
-	};
-}
+const handleTransaction = (raw, block_ref) => {
+	assert(typeof raw !== 'undefined');
+	assert(typeof block_ref !== 'undefined');
+	const transaction = db.insertTransaction(raw.txid, block_ref);
+	// console.log (raw);
+	const voutCrono = new Crono();
+	raw.vout.forEach(vout => {
+		assert(typeof vout !== 'undefined');
+		db.upsertSpkType(vout.scriptPubKey.type);
+		const transaction_ref = transaction.lastInsertRowid;
+		const utxo = db.insertUtxo(transaction_ref, vout.n, vout.value);
+		const utxo_ref = utxo.lastInsertRowid;
+		const spk_type_ref = 'select id from spk_type where description=\'' + vout.scriptPubKey.type + '\'';
+		db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, valueToSatoshi(vout.value));
+		const hex_ref = 'select id from hex where hex=\'' + vout.scriptPubKey.hex + '\'';
+		db.insertUtxoHex(utxo_ref, hex_ref);
+		if (vout.scriptPubKey.addresses) {
+			vout.scriptPubKey.addresses.forEach(address => {
+				db.upsertAddress(address, hex_ref);
+			});
+		}
+	});
+	const voutCronoDelta = voutCrono.delta();
+	profile.db.vout.delta += voutCronoDelta;
+	profile.db.vout.sigma += voutCronoDelta;
+
+	const vinCrono = new Crono();
+	raw.vin.forEach(vin => {
+		if (!vin.coinbase) {
+			const voutFound = db.selectVout(vin.txid, vin.vout);
+			assert(typeof voutFound !== 'undefined');
+			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
+			assert(satoshi >= 0);
+			db.updateHex(voutFound.hex_id, satoshi);
+			db.updateUtxoSpent(voutFound.id);
+		}
+	});
+	const vinCronoDelta = vinCrono.delta();
+	profile.db.vin.delta += vinCronoDelta;
+	profile.db.vin.sigma += vinCronoDelta;
+};
 
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
@@ -254,6 +271,8 @@ const main = async () => {
 		profile.db.query.delta = 0;
 		profile.rpc.delta = 0;
 		profile.tx.delta = 0;
+		profile.db.vout.delta = 0;
+		profile.db.vin.delta = 0;
 	}
 };
 
