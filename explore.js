@@ -85,16 +85,16 @@ const db = {
 		assert(info.changes === 1);
 		return info;
 	},
-	updateHex: (hex, satoshi) => {
-		assert(typeof hex !== 'undefined');
+	updateHex: (hex_id, satoshi) => {
+		assert(typeof hex_id !== 'undefined');
 		assertSatoshi(satoshi);
-		const info = explore.db.prepare('update hex set satoshi = ? where hex = ?')
-			.run(satoshi, hex);
+		const info = explore.db.prepare('update hex set satoshi = ? where id = ?')
+			.run(satoshi, hex_id);
 		assert(info.changes === 1);
 		return info;
 	},
 	selectVout: (txid, vout) => {
-		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex ' +
+		const ret = explore.db.prepare('select id, "id:2" as hex_id, hex, value, satoshi from vv_utxo_hex ' +
 			'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 		assert(typeof ret !== 'undefined');
@@ -150,7 +150,7 @@ const handleTransaction = (raw, block_ref) => {
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
-			db.updateHex(voutFound.hex, satoshi);
+			db.updateHex(voutFound.hex_id, satoshi);
 			db.updateUtxoSpent(voutFound.id);
 		}
 	});
