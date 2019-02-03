@@ -130,40 +130,26 @@ function Crono() {
 	};
 }
 
+function DeltaSigma(delta, sigma) {
+	this.delta = delta;
+	this.sigma = sigma;
+	this.update = delta => {
+		this.delta = delta;
+		this.sigma += delta;
+	};
+}
+
 const profile = {
 	height: 0,
-	rpc: {
-	// ticks executing RPC call
-		delta: 0,
-		sigma: 0
-	},
+	rpc: new DeltaSigma(0, 0), // ticks executing RPC call
 	db: {
-		query: {
-		// ticks executing query on db
-			delta: 0,
-			sigma: 0
-		},
-		commit: {
-		// ticks executing commit on db
-			delta: 0,
-			sigma: 0
-		},
-		vout: {
-			delta: 0,
-			sigma: 0
-		},
-		vin: {
-			delta: 0,
-			sigma: 0
-		}
+		query: new DeltaSigma(0, 0), // ticks executing query on db
+		commit: new DeltaSigma(0, 0), // ticks executing commit on db
+		vout: new DeltaSigma(0, 0), // ticks executing commit on vout
+		vin: new DeltaSigma(0, 0) // ticks executing commit on vin
 	},
-	tx: {
-	// number of transactions
-		delta: 0,
-		sigma: 0
-	},
-	delta: 0,
-	sigma: 0,
+	tx: new DeltaSigma(0, 0), // number of transactions
+	profile: new DeltaSigma(0, 0), // number of transactions
 	change: 0,
 	'tx/s': 0
 };
@@ -261,9 +247,9 @@ const main = async () => {
 		profile.tx.sigma += profile.tx.delta;
 
 		const profileDelta = profileCrono.delta();
-		profile.delta = profileDelta;
-		profile.sigma += profileDelta;
-		profile.change = profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
+		profile.profile.delta = profileDelta;
+		profile.profile.sigma += profileDelta;
+		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
 		profile['tx/s'] = 1000 * profile.tx.delta / profile.delta;
 
 		console.log(JSON.stringify({profile}));
