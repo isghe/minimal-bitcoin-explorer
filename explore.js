@@ -182,8 +182,16 @@ const profile = {
 	},
 	delta: 0,
 	sigma: 0,
+	change: 0,
 	'tx/s': 0
 };
+
+function Crono() {
+	this.fStart = new Date();
+	this.delta = () => {
+		return new Date() - this.fStart;
+	};
+}
 
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
@@ -204,30 +212,29 @@ const main = async () => {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
-	let dbEnd = new Date();
-	let lastProfile = dbEnd;
+
 	for (;;) {
+		const profileCrono = new Crono();
 		db.beginTransaction();
 		for (let i = 0; i < 10; ++i) {
+			const rpcCrono = new Crono();
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
-			const rpcEnd = new Date();
-			profile.rpc.delta += rpcEnd - dbEnd;
+			profile.rpc.delta += rpcCrono.delta();
 			assert(typeof lastBlock !== 'undefined');
 
 			profile.height = lastBlock.height;
 
+			const dbCrono = new Crono();
 			const insertBlockResult = db.insertBlock(lastBlock);
 			profile.tx.delta += lastBlock.tx.length;
 			lastBlock.tx.forEach(raw => {
 				handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
-			dbEnd = new Date();
-			profile.db.query.delta += dbEnd - rpcEnd;
+			profile.db.query.delta += dbCrono.delta();
 		}
+		const commitCrono = new Crono();
 		db.commit();
-		const dbCommitEnd = new Date();
-		const dbDelta = dbCommitEnd - dbEnd;
-		dbEnd = dbCommitEnd;
+		const dbDelta = commitCrono.delta();
 
 		profile.db.commit.delta = dbDelta;
 		profile.db.commit.sigma += dbDelta;
@@ -236,11 +243,10 @@ const main = async () => {
 		profile.rpc.sigma += profile.rpc.delta;
 		profile.tx.sigma += profile.tx.delta;
 
-		const profileDelta = dbCommitEnd - lastProfile;
+		const profileDelta = profileCrono.delta();
 		profile.delta = profileDelta;
 		profile.sigma += profileDelta;
-		lastProfile = dbCommitEnd;
-
+		profile.change = profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
 		profile['tx/s'] = 1000 * profile.tx.delta / profile.delta;
 
 		console.log(JSON.stringify({profile}));
