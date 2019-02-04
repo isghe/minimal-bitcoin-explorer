@@ -69,4 +69,4 @@ create table address(
 	hex_ref integer references hex(id) not null,
 	counter integer not null
 );
-CREATE INDEX 'address_hex_ref' ON 'address'('hex_ref');
+CREATE UNIQUE INDEX 'address_hex_ref' ON 'address'('hex_ref');
