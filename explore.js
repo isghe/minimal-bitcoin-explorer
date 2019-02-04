@@ -153,7 +153,7 @@ const profile = {
 		vin: new DeltaSigma(0, 0) // ticks executing commit on vin
 	},
 	tx: new DeltaSigma(0, 0), // number of transactions
-	profile: new DeltaSigma(0, 0), // number of transactions
+	profile: new DeltaSigma(0, 0),
 	change: 0,
 	'tx/s': 0
 };
@@ -242,7 +242,7 @@ const main = async () => {
 		profile.profile.update(profileCrono.delta());
 
 		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
-		profile['tx/s'] = 1000 * profile.tx.delta / profile.delta;
+		profile['tx/s'] = 1000 * profile.tx.delta / profile.profile.delta;
 
 		console.log(JSON.stringify({profile}));
 
