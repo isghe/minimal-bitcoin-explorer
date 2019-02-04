@@ -137,6 +137,10 @@ function DeltaSigma(delta, sigma) {
 		this.delta = delta;
 		this.sigma += delta;
 	};
+	this.increment = delta => {
+		this.delta += delta;
+		this.sigma += delta;
+	};
 }
 
 const profile = {
@@ -176,9 +180,7 @@ const handleTransaction = (raw, block_ref) => {
 			});
 		}
 	});
-	const voutCronoDelta = voutCrono.delta();
-	profile.db.vout.delta += voutCronoDelta;
-	profile.db.vout.sigma += voutCronoDelta;
+	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new Crono();
 	raw.vin.forEach(vin => {
@@ -191,9 +193,7 @@ const handleTransaction = (raw, block_ref) => {
 			db.updateUtxoSpent(voutFound.id);
 		}
 	});
-	const vinCronoDelta = vinCrono.delta();
-	profile.db.vin.delta += vinCronoDelta;
-	profile.db.vin.sigma += vinCronoDelta;
+	profile.db.vin.increment(vinCrono.delta());
 };
 
 const main = async () => {
@@ -222,33 +222,25 @@ const main = async () => {
 		for (let i = 0; i < 10; ++i) {
 			const rpcCrono = new Crono();
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
-			profile.rpc.delta += rpcCrono.delta();
+			profile.rpc.increment(rpcCrono.delta());
 			assert(typeof lastBlock !== 'undefined');
 
 			profile.height = lastBlock.height;
 
 			const dbCrono = new Crono();
 			const insertBlockResult = db.insertBlock(lastBlock);
-			profile.tx.delta += lastBlock.tx.length;
+			profile.tx.increment(lastBlock.tx.length);
 			lastBlock.tx.forEach(raw => {
 				handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
-			profile.db.query.delta += dbCrono.delta();
+			profile.db.query.increment(dbCrono.delta());
 		}
 		const commitCrono = new Crono();
 		db.commit();
-		const dbDelta = commitCrono.delta();
 
-		profile.db.commit.delta = dbDelta;
-		profile.db.commit.sigma += dbDelta;
+		profile.db.commit.update(commitCrono.delta());
+		profile.profile.update(profileCrono.delta());
 
-		profile.db.query.sigma += profile.db.query.delta;
-		profile.rpc.sigma += profile.rpc.delta;
-		profile.tx.sigma += profile.tx.delta;
-
-		const profileDelta = profileCrono.delta();
-		profile.profile.delta = profileDelta;
-		profile.profile.sigma += profileDelta;
 		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
 		profile['tx/s'] = 1000 * profile.tx.delta / profile.delta;
 
