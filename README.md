@@ -1,7 +1,9 @@
 # Minimal Bitcoin Explorer
 
-This is a node.js project building a sqlite database with the amounts related to a generic Bitcoin Address.
+This is a node.js project building a `sqlite` database with the amounts related to a generic Bitcoin Address.
 The stage is to be considered experimental, and collected data still need validation.
+
+Soon a version running on `mongodb`.
 
 * [Installation](#installation)
 * [Configuration](#configuration)
@@ -30,7 +32,7 @@ Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), 
 
 ## Run
 ```
-$ node explore.js
+$ node explore-sqlite.js
 ```
 The application build the database throw bitcoind's RPC-APIs:
 * ~~`getblockhash`~~

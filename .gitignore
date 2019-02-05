@@ -6,4 +6,5 @@ package-lock.json
 explore.log
 nohup.out*
 explore.sqlite-journal
+mongodb
 
