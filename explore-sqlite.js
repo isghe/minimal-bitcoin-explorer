@@ -69,6 +69,7 @@ const db = {
 		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
 			'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
 			.run(hex, satoshi, hex, satoshi, hex);
+		// console.log (info);
 		assert(info.changes === 1);
 		return info;
 	},
@@ -85,16 +86,16 @@ const db = {
 		assert(info.changes === 1);
 		return info;
 	},
-	updateHex: (hex, satoshi) => {
-		assert(typeof hex !== 'undefined');
+	updateHex: (hex_id, satoshi) => {
+		assert(typeof hex_id !== 'undefined');
 		assertSatoshi(satoshi);
-		const info = explore.db.prepare('update hex set satoshi = ? where hex = ?')
-			.run(satoshi, hex);
+		const info = explore.db.prepare('update hex set satoshi = ? where id = ?')
+			.run(satoshi, hex_id);
 		assert(info.changes === 1);
 		return info;
 	},
 	selectVout: (txid, vout) => {
-		const ret = explore.db.prepare('select id, hex, value, satoshi from vv_utxo_hex ' +
+		const ret = explore.db.prepare('select id, "id:2" as hex_id, hex, value, satoshi from vv_utxo_hex ' +
 			'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 			.get(txid, vout);
 		assert(typeof ret !== 'undefined');
@@ -122,11 +123,47 @@ const valueToSatoshi = bitcoin => {
 	return satoshi;
 };
 
+function Crono() {
+	this.fStart = new Date();
+	this.delta = () => {
+		return new Date() - this.fStart;
+	};
+}
+
+function DeltaSigma(delta, sigma) {
+	this.delta = delta;
+	this.sigma = sigma;
+	this.update = delta => {
+		this.delta = delta;
+		this.sigma += delta;
+	};
+	this.increment = delta => {
+		this.delta += delta;
+		this.sigma += delta;
+	};
+}
+
+const profile = {
+	height: 0,
+	rpc: new DeltaSigma(0, 0), // ticks executing RPC call
+	db: {
+		query: new DeltaSigma(0, 0), // ticks executing query on db
+		commit: new DeltaSigma(0, 0), // ticks executing commit on db
+		vout: new DeltaSigma(0, 0), // ticks executing commit on vout
+		vin: new DeltaSigma(0, 0) // ticks executing commit on vin
+	},
+	tx: new DeltaSigma(0, 0), // number of transactions
+	profile: new DeltaSigma(0, 0),
+	change: 0,
+	'tx/s': null // new DeltaSigma(0, 0)
+};
+
 const handleTransaction = (raw, block_ref) => {
 	assert(typeof raw !== 'undefined');
 	assert(typeof block_ref !== 'undefined');
 	const transaction = db.insertTransaction(raw.txid, block_ref);
 	// console.log (raw);
+	const voutCrono = new Crono();
 	raw.vout.forEach(vout => {
 		assert(typeof vout !== 'undefined');
 		db.upsertSpkType(vout.scriptPubKey.type);
@@ -143,17 +180,20 @@ const handleTransaction = (raw, block_ref) => {
 			});
 		}
 	});
+	profile.db.vout.increment(voutCrono.delta());
 
+	const vinCrono = new Crono();
 	raw.vin.forEach(vin => {
 		if (!vin.coinbase) {
 			const voutFound = db.selectVout(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
-			db.updateHex(voutFound.hex, satoshi);
+			db.updateHex(voutFound.hex_id, satoshi);
 			db.updateUtxoSpent(voutFound.id);
 		}
 	});
+	profile.db.vin.increment(vinCrono.delta());
 };
 
 const main = async () => {
@@ -175,16 +215,42 @@ const main = async () => {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
-	for (;;) {
-		lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
-		assert(typeof lastBlock !== 'undefined');
-		db.beginTransaction();
-		const insertBlockResult = db.insertBlock(lastBlock);
 
-		lastBlock.tx.forEach(raw => {
-			handleTransaction(raw, insertBlockResult.lastInsertRowid);
-		});
+	for (;;) {
+		const profileCrono = new Crono();
+		db.beginTransaction();
+		for (let i = 0; i < 10; ++i) {
+			const rpcCrono = new Crono();
+			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
+			profile.rpc.increment(rpcCrono.delta());
+			assert(typeof lastBlock !== 'undefined');
+
+			profile.height = lastBlock.height;
+
+			const dbCrono = new Crono();
+			const insertBlockResult = db.insertBlock(lastBlock);
+			profile.tx.increment(lastBlock.tx.length);
+			lastBlock.tx.forEach(raw => {
+				handleTransaction(raw, insertBlockResult.lastInsertRowid);
+			});
+			profile.db.query.increment(dbCrono.delta());
+		}
+		const commitCrono = new Crono();
 		db.commit();
+
+		profile.db.commit.update(commitCrono.delta());
+		profile.profile.update(profileCrono.delta());
+
+		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
+		profile['tx/s'] = new DeltaSigma(1000 * profile.tx.delta / profile.profile.delta, 1000 * profile.tx.sigma / profile.profile.sigma);
+
+		console.log(JSON.stringify({profile}));
+
+		profile.db.query.delta = 0;
+		profile.rpc.delta = 0;
+		profile.tx.delta = 0;
+		profile.db.vout.delta = 0;
+		profile.db.vin.delta = 0;
 	}
 };
 
