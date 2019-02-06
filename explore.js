@@ -6,108 +6,7 @@
 const assert = require('assert');
 
 const explore = {
-	bc: null,
-	db: null
-};
-
-const db = {
-	beginTransaction: () => {
-		explore.db.prepare('begin transaction')
-			.run();
-	},
-	commit: () => {
-		explore.db.prepare('commit')
-			.run();
-	},
-	selectCountBlock: () => {
-		const ret = explore.db.prepare('select count (*) as ts_counter from block')
-			.get();
-		assert(typeof ret !== 'undefined');
-		return ret;
-	},
-	selectLastBlock: () => {
-		const ret = explore.db.prepare('select height, hash, nextblockhash from block where height = (select max (height) from block)')
-			.get();
-		assert(typeof ret !== 'undefined');
-		return ret;
-	},
-	insertBlock: block => {
-		const info = explore.db.prepare('insert into block(height, hash, nextblockhash) values (?, ?, ?)')
-			.run(block.height, block.hash, block.nextblockhash);
-		assert(info.changes === 1);
-		return info;
-	},
-	insertTransaction: (txid, block_ref) => {
-		const info = explore.db.prepare('insert into h_transaction(txid, block_ref) values (?, ?)')
-			.run(txid, block_ref);
-		assert(info.changes === 1);
-		return info;
-	},
-	insertUtxo: (transaction_ref, vout, value) => {
-		const info = explore.db.prepare('insert into utxo(transaction_ref, vout, value) values (?, ?, ?)')
-			.run(transaction_ref, vout, value);
-		assert(info.changes === 1);
-		return info;
-	},
-	upsertSpkType: type => {
-		const info = explore.db.prepare('insert into spk_type (description, counter) values (?, 1) ' +
-			'ON CONFLICT(description) DO UPDATE SET counter = (select counter + 1 from spk_type where description = ?)')
-			.run(type, type);
-		assert(info.changes === 1);
-		return info;
-	},
-	upsertAddress: (text, hex_ref) => {
-		const info = explore.db.prepare('insert into address(address, hex_ref, counter) values (?, (' + hex_ref + '),1) ' +
-			'ON CONFLICT(address) DO UPDATE SET counter = (select counter + 1 from address where address = ?)')
-			.run(text, text);
-		assert(info.changes === 1);
-		return info;
-	},
-	upsertHex: (hex, spk_type_ref, satoshi) => {
-		assert(typeof hex !== 'undefined');
-		assertSatoshi(satoshi);
-		const info = explore.db.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
-			'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
-			.run(hex, satoshi, hex, satoshi, hex);
-		// console.log (info);
-		assert(info.changes === 1);
-		return info;
-	},
-	insertUtxoHex: (utxo_ref, ref) => {
-		const info = explore.db.prepare('insert into utxo_hex(utxo_ref, hex_ref) values (?, (' + ref + '))')
-			.run(utxo_ref);
-		assert(info.changes === 1);
-		return info;
-	},
-	updateHexDelta: (hex, deltaSatoshi) => {
-		assert(typeof hex !== 'undefined');
-		const info = explore.db.prepare('update hex set satoshi = (select satoshi + ? from hex where hex = ?) where hex = ?')
-			.run(deltaSatoshi, hex, hex);
-		assert(info.changes === 1);
-		return info;
-	},
-	updateHex: (hex_id, satoshi) => {
-		assert(typeof hex_id !== 'undefined');
-		assertSatoshi(satoshi);
-		const info = explore.db.prepare('update hex set satoshi = ? where id = ?')
-			.run(satoshi, hex_id);
-		assert(info.changes === 1);
-		return info;
-	},
-	selectVout: (txid, vout) => {
-		const ret = explore.db.prepare('select id, "id:2" as hex_id, hex, value, satoshi from vv_utxo_hex ' +
-			'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
-			.get(txid, vout);
-		assert(typeof ret !== 'undefined');
-		assertSatoshi(ret.satoshi);
-		return ret;
-	},
-	updateUtxoSpent: id => {
-		const info = explore.db.prepare('update utxo set spent = 1 where id = ?')
-			.run(id);
-		assert(info.changes === 1);
-		return info;
-	}
+	bc: null
 };
 
 const assertSatoshi = satoshi => {
@@ -196,17 +95,12 @@ const handleTransaction = (raw, block_ref) => {
 	profile.db.vin.increment(vinCrono.delta());
 };
 
+let db = null;
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	const BetterSqlite3 = require('better-sqlite3');
-	explore.db = new BetterSqlite3('explore.sqlite', {
-		verboseNo: query => {
-			assert(typeof query !== 'undefined');
-			console.log(JSON.stringify({query}));
-		}
-	});
-
+	db = require('./db-engine/' + configuration.dbEngine.name);
+	console.log('Current db-engine: ' + configuration.dbEngine.name);
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	let lastBlock = {};
 	if (db.selectCountBlock().ts_counter > 0) {
@@ -219,7 +113,7 @@ const main = async () => {
 	for (;;) {
 		const profileCrono = new Crono();
 		db.beginTransaction();
-		for (let i = 0; i < 10; ++i) {
+		for (let i = 0; i < 1; ++i) {
 			const rpcCrono = new Crono();
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			profile.rpc.increment(rpcCrono.delta());
