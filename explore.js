@@ -99,8 +99,8 @@ let db = null;
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	db = require('./db-engine/' + configuration.dbEngine);
-
+	db = require('./db-engine/' + configuration.dbEngine.name);
+	console.log('Current db-engine: ' + configuration.dbEngine.name);
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	let lastBlock = {};
 	if (db.selectCountBlock().ts_counter > 0) {
@@ -113,7 +113,7 @@ const main = async () => {
 	for (;;) {
 		const profileCrono = new Crono();
 		db.beginTransaction();
-		for (let i = 0; i < 10; ++i) {
+		for (let i = 0; i < 1; ++i) {
 			const rpcCrono = new Crono();
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			profile.rpc.increment(rpcCrono.delta());
