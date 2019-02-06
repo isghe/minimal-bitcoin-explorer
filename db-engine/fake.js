@@ -24,7 +24,13 @@ const sqlite = () => {
 		commit: () => {
 		},
 		selectCountBlock: () => {
-			return typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined';
+			const ret = {
+				ts_counter: 0
+			};
+			if (typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined') {
+				ret.ts_counter = 1;
+			}
+			return ret;
 		},
 		selectLastBlock: () => {
 			assert(typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined');

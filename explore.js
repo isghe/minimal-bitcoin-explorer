@@ -115,6 +115,7 @@ const main = async () => {
 		db.beginTransaction();
 		for (let i = 0; i < 1; ++i) {
 			const rpcCrono = new Crono();
+			assert(typeof lastBlock.nextblockhash !== 'undefined');
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			profile.rpc.increment(rpcCrono.delta());
 			assert(typeof lastBlock !== 'undefined');
