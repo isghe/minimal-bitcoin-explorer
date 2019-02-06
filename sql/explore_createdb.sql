@@ -28,6 +28,8 @@ create table h_transaction(
 	constraint unq_h_transaction unique (txid, block_ref)
 );
 
+CREATE UNIQUE INDEX 'h_transaction_unq_txid' ON 'h_transaction'('txid') where txid not in ('d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599', 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468');
+
 create table utxo(
 	id integer primary key not null,
 	transaction_ref integer references h_transaction (id) not null,

@@ -10,25 +10,7 @@ const explore = {
 	db: null
 };
 
-const mongo = {
-	db: null
-};
-
-const dbMongo = {
-	beginTransaction: =>{
-		console.log ("beginTransaction");
-	},
-	commit: () => {
-		console.log ("commit");
-	},
-	selectCountBlock: () => {
-		const ts_counter = await mongo.db.collection('block').countDocuments();
-		assert(typeof ts_counter !== 'undefined');
-		return {ts_counter};
-	},
-};
-
-const dbSqlite = {
+const db = {
 	beginTransaction: () => {
 		explore.db.prepare('begin transaction')
 			.run();
@@ -176,7 +158,7 @@ const profile = {
 	'tx/s': null // new DeltaSigma(0, 0)
 };
 
-const handleTransaction = (raw, block_ref) => {
+const handleTransactionTrash = (raw, block_ref) => {
 	assert(typeof raw !== 'undefined');
 	assert(typeof block_ref !== 'undefined');
 	const transaction = db.insertTransaction(raw.txid, block_ref);
@@ -214,30 +196,61 @@ const handleTransaction = (raw, block_ref) => {
 	profile.db.vin.increment(vinCrono.delta());
 };
 
+const mongo = {
+	db: null
+};
+
+const handleBlock = async blockhash => {
+	console.log({blockhash});
+	const rpcCrono = new Crono();
+	const lastBlock = await explore.bc.getBlock(blockhash, 2);
+	assert(typeof lastBlock !== 'undefined');
+	profile.rpc.increment(rpcCrono.delta());
+
+	mongo.db.collection('block').insertOne(lastBlock)
+		.then(result => {
+			lastBlock.tx.forEach(raw => {
+				handleTransaction(raw, insertBlockResult.lastInsertRowid);
+			});
+			setTimeout(() => {
+				handleBlock(lastBlock.nextblockhash);
+			});
+		});
+	profile.height = lastBlock.height;
+};
+
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	
+	explore.bc = new BitcoinCore(configuration.bitcoinCore);
+
 	const {MongoClient} = require('mongodb');
 	const url = 'mongodb://localhost:27017';
 	const dbName = 'explore';
 
 	const client = await MongoClient.connect(url, {useNewUrlParser: true});
 	console.log('Connected successfully to server');
+
 	mongo.db = client.db(dbName);
 
-	explore.bc = new BitcoinCore(configuration.bitcoinCore);
-	let lastBlock = {};
-	if (db.selectCountBlock().ts_counter > 0) {
-		lastBlock = db.selectLastBlock();
-	} else {
+	const count = await mongo.db.collection('block').countDocuments();
+	console.log({count});
+
+	let lastBlock = {
+		nextblockhash: null
+	};
+	if (count === 0) {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
+	} else {
+		const block = await mongo.db.collection('block').find().skip(count - 1).toArray();
+		assert(block.length === 1);
+		lastBlock.nextblockhash = block[0].nextblockhash;
 	}
 
 	for (;;) {
 		const profileCrono = new Crono();
-		db.beginTransaction();
+
 		for (let i = 0; i < 10; ++i) {
 			const rpcCrono = new Crono();
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
@@ -247,15 +260,15 @@ const main = async () => {
 			profile.height = lastBlock.height;
 
 			const dbCrono = new Crono();
-			const insertBlockResult = db.insertBlock(lastBlock);
+			const insertBlockResult = await mongo.db.collection('block').insertOne(lastBlock);
+
 			profile.tx.increment(lastBlock.tx.length);
 			lastBlock.tx.forEach(raw => {
-				handleTransaction(raw, insertBlockResult.lastInsertRowid);
+				// handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
 			profile.db.query.increment(dbCrono.delta());
 		}
 		const commitCrono = new Crono();
-		db.commit();
 
 		profile.db.commit.update(commitCrono.delta());
 		profile.profile.update(profileCrono.delta());
