@@ -4,23 +4,11 @@
 
 'use strict';
 const assert = require('assert');
+const util = require('./lib/util.js');
 
 const explore = {
 	bc: null,
 	db: null
-};
-
-const assertSatoshi = satoshi => {
-	assert(typeof satoshi !== 'undefined');
-	assert(Number.isInteger(satoshi));
-};
-
-const valueToSatoshi = bitcoin => {
-	assert(typeof bitcoin !== 'undefined');
-	// 32.91*100000000 = 3290999999.9999995!!!
-	const satoshi = Math.round(bitcoin * 100000000);
-	assertSatoshi(satoshi);
-	return satoshi;
 };
 
 function Crono() {
@@ -71,7 +59,7 @@ const handleTransaction = (raw, block_ref) => {
 		const utxo = explore.db.insertUtxo(transaction_ref, vout.n, vout.value);
 		const utxo_ref = utxo.lastInsertRowid;
 		const spk_type_ref = 'select id from spk_type where description=\'' + vout.scriptPubKey.type + '\'';
-		explore.db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, valueToSatoshi(vout.value));
+		explore.db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
 		const hex_ref = 'select id from hex where hex=\'' + vout.scriptPubKey.hex + '\'';
 		explore.db.insertUtxoHex(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
@@ -87,7 +75,7 @@ const handleTransaction = (raw, block_ref) => {
 		if (!vin.coinbase) {
 			const voutFound = explore.db.selectVout(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
-			const satoshi = voutFound.satoshi - valueToSatoshi(voutFound.value);
+			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
 			explore.db.updateHex(voutFound.hex_id, satoshi);
 			explore.db.updateUtxoSpent(voutFound.id);
