@@ -10,7 +10,7 @@ const assertSatoshi = satoshi => {
 	assert(Number.isInteger(satoshi));
 };
 
-const sqlite = () => {
+const fake = () => {
 	const configuration = require('../configuration');
 	let fakeBlockIndex = 0;
 	let fakeTransactionIndex = 0;
@@ -105,4 +105,4 @@ const sqlite = () => {
 	return db;
 };
 
-module.exports = sqlite();
+module.exports = fake();
