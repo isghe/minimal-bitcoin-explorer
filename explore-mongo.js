@@ -15,17 +15,17 @@ const mongo = {
 };
 
 const dbMongo = {
-	beginTransaction: =>{
-		console.log ("beginTransaction");
+	beginTransaction: () => {
+		console.log('beginTransaction');
 	},
 	commit: () => {
-		console.log ("commit");
+		console.log('commit');
 	},
-	selectCountBlock: () => {
+	selectCountBlock: async () => {
 		const ts_counter = await mongo.db.collection('block').countDocuments();
 		assert(typeof ts_counter !== 'undefined');
 		return {ts_counter};
-	},
+	}
 };
 
 const dbSqlite = {
@@ -214,10 +214,11 @@ const handleTransaction = (raw, block_ref) => {
 	profile.db.vin.increment(vinCrono.delta());
 };
 
+const db = dbMongo;
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	
+
 	const {MongoClient} = require('mongodb');
 	const url = 'mongodb://localhost:27017';
 	const dbName = 'explore';
