@@ -4,11 +4,7 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-
-const assertSatoshi = satoshi => {
-	assert(typeof satoshi !== 'undefined');
-	assert(Number.isInteger(satoshi));
-};
+const util = require('../lib/util.js');
 
 const sqlite = () => {
 	// const configuration = require('../configuration');
@@ -75,7 +71,7 @@ const sqlite = () => {
 		},
 		upsertHex: (hex, spk_type_ref, satoshi) => {
 			assert(typeof hex !== 'undefined');
-			assertSatoshi(satoshi);
+			util.assert.isSatoshi(satoshi);
 			const info = client.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
 				'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
 				.run(hex, satoshi, hex, satoshi, hex);
@@ -98,7 +94,7 @@ const sqlite = () => {
 		},
 		updateHex: (hex_id, satoshi) => {
 			assert(typeof hex_id !== 'undefined');
-			assertSatoshi(satoshi);
+			util.assert.isSatoshi(satoshi);
 			const info = client.prepare('update hex set satoshi = ? where id = ?')
 				.run(satoshi, hex_id);
 			assert(info.changes === 1);
@@ -109,7 +105,7 @@ const sqlite = () => {
 				'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
 				.get(txid, vout);
 			assert(typeof ret !== 'undefined');
-			assertSatoshi(ret.satoshi);
+			util.assert.isSatoshi(ret.satoshi);
 			return ret;
 		},
 		updateUtxoSpent: id => {
