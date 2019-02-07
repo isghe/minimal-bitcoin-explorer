@@ -4,11 +4,7 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-
-const assertSatoshi = satoshi => {
-	assert(typeof satoshi !== 'undefined');
-	assert(Number.isInteger(satoshi));
-};
+const util = require('../lib/util.js');
 
 const fake = () => {
 	const configuration = require('../configuration');
@@ -62,7 +58,7 @@ const fake = () => {
 		},
 		upsertHex: (hex, spk_type_ref, satoshi) => {
 			assert(typeof hex !== 'undefined');
-			assertSatoshi(satoshi);
+			util.assert.isSatoshi(satoshi);
 			return {};
 		},
 		insertUtxoHex: (utxo_ref, ref) => {
@@ -76,19 +72,9 @@ const fake = () => {
 		},
 		updateHex: (hex_id, satoshi) => {
 			assert(typeof hex_id !== 'undefined');
-			assertSatoshi(satoshi);
+			util.assert.isSatoshi(satoshi);
 			return {};
 		},
-		/*
-		selectVoutOld: (txid, vout) => {
-			const ret = client.prepare('select id, "id:2" as hex_id, hex, value, satoshi from vv_utxo_hex ' +
-				'where transaction_ref = (select id from h_transaction where txid = ?) and vout = ? and spent=0')
-				.get(txid, vout);
-			assert(typeof ret !== 'undefined');
-			assertSatoshi(ret.satoshi);
-			return ret;
-		},
-		*/
 		selectVout: (txid, vout) => {
 			return {
 				id: fakeUtxo,
