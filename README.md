@@ -1,6 +1,6 @@
 # Minimal Bitcoin Explorer
 
-This is a node.js project building a sqlite database with the amounts related to a generic Bitcoin Address.
+This is a node.js project building a database with the amounts related to a generic Bitcoin Address.
 The stage is to be considered experimental, and collected data still need validation.
 
 * [Installation](#installation)
@@ -26,11 +26,30 @@ the following `npm` dependencies will be installed:
 $ cp configuration-template.js configuration.js
 ```
 
-Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), `username` and `password`
+Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), `username` and `password`, and set the right db-engine for you; available db-engines are:
+* `sqlite`
+* `fake`
+* `mongodb` coming soon
+
+`sqlite` will create the database in `explore.sqlite`;
+
+`fake` will not create any database, but it will iterate throw all the blocks, starting from `configuration.dbEngine.fake.nextblockhash`; if not defined, it will begin from `genesis` block.
 
 ## Run
 ```
 $ node explore.js
+Current db-engine: fake
+{"profile":{"height":0,"rpc":{"delta":35,"sigma":35},"db":{"query":{"delta":1,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":1,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":1},"profile":{"delta":36,"sigma":36},"change":0,"tx/s":{"delta":27.77777777777778,"sigma":27.77777777777778}}}
+{"profile":{"height":1,"rpc":{"delta":6,"sigma":41},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":2},"profile":{"delta":6,"sigma":42},"change":0,"tx/s":{"delta":166.66666666666666,"sigma":47.61904761904762}}}
+{"profile":{"height":2,"rpc":{"delta":4,"sigma":45},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":3},"profile":{"delta":4,"sigma":46},"change":0,"tx/s":{"delta":250,"sigma":65.21739130434783}}}
+{"profile":{"height":3,"rpc":{"delta":4,"sigma":49},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":4},"profile":{"delta":4,"sigma":50},"change":0,"tx/s":{"delta":250,"sigma":80}}}
+{"profile":{"height":4,"rpc":{"delta":5,"sigma":54},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":5},"profile":{"delta":5,"sigma":55},"change":0,"tx/s":{"delta":200,"sigma":90.9090909090909}}}
+{"profile":{"height":5,"rpc":{"delta":4,"sigma":58},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":6},"profile":{"delta":4,"sigma":59},"change":0,"tx/s":{"delta":250,"sigma":101.69491525423729}}}
+{"profile":{"height":6,"rpc":{"delta":4,"sigma":62},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":7},"profile":{"delta":4,"sigma":63},"change":0,"tx/s":{"delta":250,"sigma":111.11111111111111}}}
+{"profile":{"height":7,"rpc":{"delta":4,"sigma":66},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":8},"profile":{"delta":4,"sigma":67},"change":0,"tx/s":{"delta":250,"sigma":119.40298507462687}}}
+{"profile":{"height":8,"rpc":{"delta":4,"sigma":70},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":9},"profile":{"delta":4,"sigma":71},"change":0,"tx/s":{"delta":250,"sigma":126.7605633802817}}}
+{"profile":{"height":9,"rpc":{"delta":4,"sigma":74},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":10},"profile":{"delta":4,"sigma":75},"change":0,"tx/s":{"delta":250,"sigma":133.33333333333334}}}
+{"profile":{"height":10,"rpc":{"delta":4,"sigma":78},"db":{"query":{"delta":0,"sigma":1},"commit":{"delta":0,"sigma":0},"vout":{"delta":0,"sigma":1},"vin":{"delta":0,"sigma":0}},"tx":{"delta":1,"sigma":11},"profile":{"delta":4,"sigma":79},"change":0,"tx/s":{"delta":250,"sigma":139.2405063291139}}}
 ```
 The application build the database throw bitcoind's RPC-APIs:
 * ~~`getblockhash`~~
@@ -38,7 +57,7 @@ The application build the database throw bitcoind's RPC-APIs:
 
 ## Sniffing
 
-To see the progress, you can sniff the network, to catch the block it is archiving.
+To sniff the network:
 
 Check your `LOOPBACK` network interface.
 
