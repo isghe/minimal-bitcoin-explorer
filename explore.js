@@ -93,6 +93,8 @@ const main = async () => {
 	const configuration = require('./configuration');
 	explore.db = await require('./db-engine/' + configuration.dbEngine.name);
 	console.log('Current db-engine: ' + configuration.dbEngine.name);
+	const stoppedSuccesfully = await explore.db.controlFlow.stoppedSuccesfully();
+	assert(stoppedSuccesfully === true);
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	let lastBlock = {};
 	const count = (await explore.db.selectCountBlock()).ts_counter;
@@ -104,7 +106,11 @@ const main = async () => {
 	}
 	console.log({lastBlock});
 
-	for (let j = 0; true; ++j) {
+	while (true) { // eslint-disable-line no-constant-condition
+		const hasToStop = await explore.db.controlFlow.hasToStop();
+		if (hasToStop === true) {
+			break;
+		}
 		const profileCrono = new Crono();
 		explore.db.beginTransaction();
 		for (let i = 0; i < 1; ++i) {
@@ -146,6 +152,8 @@ const main = async () => {
 		profile.db.vout.delta = 0;
 		profile.db.vin.delta = 0;
 	}
+	await explore.db.controlFlow.setStopSuccesfully();
+	console.log('Stopped succesfully');
 };
 
 main();
