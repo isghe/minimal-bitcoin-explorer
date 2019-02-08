@@ -102,150 +102,162 @@ const mongodb = async () => {
 				return updateResult;
 			}
 		},
-
 		beginTransaction: () => {
 		},
 		commit: () => {
 		},
-		selectCountBlock: async () => {
-			const ts_counter = await clientDb.collection('block').countDocuments();
-			assert(typeof ts_counter !== 'undefined');
-			return {ts_counter};
-		},
-		selectLastBlock: async count => {
-			const block = await clientDb.collection('block').find().skip(count - 1).toArray();
-			assert(block.length === 1);
-			return block[0];
-		},
-		insertBlock: async block => {
-			// height, hash, nextblockhash
-			const insertResult = await clientDb.collection('block').insertOne({
-				height: block.height,
-				hash: block.hash,
-				nextblockhash: block.nextblockhash
-			});
-
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
-		},
-		insertTransaction: async (txid, block_ref) => {
-			const insertResult = await clientDb.collection('h_transaction').insertOne({
-				txid,
-				block_ref
-			});
-
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
-		},
-
-		insertUtxo: async (transaction_ref, vout, value) => {
-			const insertResult = await clientDb.collection('utxo').insertOne({
-				transaction_ref,
-				vout,
-				value,
-				spent: false
-			});
-
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
-		},
-		upsertSpkType: async type => {
-			const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
-			assert(spkType.length <= 1);
-			if (spkType.length === 0) {
-				await clientDb.collection('spk_type').insertOne({
-					description: type,
-					counter: 1
+		block: {
+			selectCount: async () => {
+				const ts_counter = await clientDb.collection('block').countDocuments();
+				assert(typeof ts_counter !== 'undefined');
+				return {ts_counter};
+			},
+			selectLast: async count => {
+				const block = await clientDb.collection('block').find().skip(count - 1).toArray();
+				assert(block.length === 1);
+				return block[0];
+			},
+			insert: async block => {
+				// height, hash, nextblockhash
+				const insertResult = await clientDb.collection('block').insertOne({
+					height: block.height,
+					hash: block.hash,
+					nextblockhash: block.nextblockhash
 				});
-			} else {
-				await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
+
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
 			}
-			return {};
 		},
-
-		getSpkTypeRef: async description => {
-			const ret = await clientDb.collection('spk_type').find({description}).toArray();
-			assert(ret.length === 1);
-			return ret[0]._id;
-		},
-		getHexRef: async hex => {
-			const ret = await clientDb.collection('hex').find({hex}).toArray();
-			assert(ret.length === 1);
-			return ret[0]._id;
-		},
-
-		upsertAddress: async (address, hex_ref) => {
-			const spkType = await clientDb.collection('address').find({address}).toArray();
-			assert(spkType.length <= 1);
-			if (spkType.length === 0) {
-				await clientDb.collection('address').insertOne({
-					address,
-					hex_ref,
-					counter: 1
+		transaction: {
+			insert: async (txid, block_ref) => {
+				const insertResult = await clientDb.collection('h_transaction').insertOne({
+					txid,
+					block_ref
 				});
-			} else {
-				await clientDb.collection('address').updateOne({address}, {$set: {counter: spkType[0].counter + 1}});
+
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
 			}
-			return {};
 		},
-		upsertHex: async (hex, spk_type_ref, satoshi) => {
-			const spkType = await clientDb.collection('hex').find({hex}).toArray();
-			assert(spkType.length <= 1);
-			if (spkType.length === 0) {
-				await clientDb.collection('hex').insertOne({
-					hex,
-					spk_type_ref,
-					satoshi,
-					counter: 1
+		utxo: {
+			insert: async (transaction_ref, vout, value) => {
+				const insertResult = await clientDb.collection('utxo').insertOne({
+					transaction_ref,
+					vout,
+					value,
+					spent: false
 				});
-			} else {
-				await clientDb.collection('hex').updateOne({hex}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
+
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			},
+			updateSpent: async id => {
+				const updateResult = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
+				return updateResult;
 			}
-			return {};
 		},
-		insertUtxoHex: async (utxo_ref, hex_ref) => {
-			const insertResult = await clientDb.collection('utxo_hex').insertOne({
-				utxo_ref,
-				hex_ref
-			});
-
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
+		spkType: {
+			upsert: async type => {
+				const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
+				assert(spkType.length <= 1);
+				if (spkType.length === 0) {
+					const insertResult = await clientDb.collection('spk_type').insertOne({
+						description: type,
+						counter: 1
+					});
+				} else {
+					const updateResult = await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
+				}
+				return {};
+			},
+			getRef: async description => {
+				// return 'select id from spk_type where description=\'' + description + '\'';
+				const ret = await clientDb.collection('spk_type').find({description}).toArray();
+				assert(ret.length === 1);
+				return ret[0]._id;
+			}
 		},
+		hex: {
+			getRef: async hex => {
+				// return 'select id from hex where hex=\'' + hex + '\'';
+				const ret = await clientDb.collection('hex').find({hex}).toArray();
+				assert(ret.length === 1);
+				return ret[0]._id;
+			},
+			upsert: async (hex, spk_type_ref, satoshi) => {
+				const spkType = await clientDb.collection('hex').find({hex}).toArray();
+				assert(spkType.length <= 1);
+				if (spkType.length === 0) {
+					const insertResult = await clientDb.collection('hex').insertOne({
+						hex,
+						spk_type_ref,
+						satoshi,
+						counter: 1
+					});
+				} else {
+					await clientDb.collection('hex').updateOne({hex}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
+				}
+				return {};
+			},
+			update: async (hex_id, satoshi) => {
+				assert(typeof hex_id !== 'undefined');
+				assertSatoshi(satoshi);
+				const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
 
-		updateHex: async (hex_id, satoshi) => {
-			assert(typeof hex_id !== 'undefined');
-			assertSatoshi(satoshi);
-			const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
-
-			return updateResult;
+				return updateResult;
+			}
 		},
-
-		selectVout: async (txid, vout) => {
-			const transaction = await clientDb.collection('h_transaction').find({txid}).toArray();
-			assert(transaction.length === 1);
-			const utxo = await clientDb.collection('utxo').find({transaction_ref: transaction[0]._id, vout}).toArray();
-			assert(utxo.length === 1);
-			const utxo_hex = await clientDb.collection('utxo_hex').find({utxo_ref: utxo[0]._id}).toArray();
-			assert(utxo_hex.length === 1);
-			const hex = await clientDb.collection('hex').find({_id: utxo_hex[0].hex_ref}).toArray();
-			assert(hex.length === 1);
-
-			return {
-				id: utxo[0]._id,
-				value: utxo[0].value,
-				satoshi: hex[0].satoshi,
-				hex_id: hex[0]._id
-			};
+		address: {
+			upsert: async (address, hex_ref) => {
+				const spkType = await clientDb.collection('address').find({address}).toArray();
+				assert(spkType.length <= 1);
+				if (spkType.length === 0) {
+					const insertResult = await clientDb.collection('address').insertOne({
+						address,
+						hex_ref,
+						counter: 1
+					});
+				} else {
+					await clientDb.collection('address').updateOne({address}, {$set: {counter: spkType[0].counter + 1}});
+				}
+				return {};
+			}
 		},
+		utxoHex: {
+			insert: async (utxo_ref, hex_ref) => {
+				const insertResult = await clientDb.collection('utxo_hex').insertOne({
+					utxo_ref,
+					hex_ref
+				});
 
-		updateUtxoSpent: async id => {
-			const updateResult = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
-			return updateResult;
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			}
+		},
+		vout: {
+			select: async (txid, vout) => {
+				const transaction = await clientDb.collection('h_transaction').find({txid}).toArray();
+				assert(transaction.length === 1);
+				const utxo = await clientDb.collection('utxo').find({transaction_ref: transaction[0]._id, vout}).toArray();
+				assert(utxo.length === 1);
+
+				const utxo_hex = await clientDb.collection('utxo_hex').find({utxo_ref: utxo[0]._id}).toArray();
+				assert(utxo_hex.length === 1);
+				const hex = await clientDb.collection('hex').find({_id: utxo_hex[0].hex_ref}).toArray();
+				assert(hex.length === 1);
+
+				return {
+					id: utxo[0]._id,
+					value: utxo[0].value,
+					satoshi: hex[0].satoshi,
+					hex_id: hex[0]._id
+				};
+			}
 		}
 	};
 	return db;
