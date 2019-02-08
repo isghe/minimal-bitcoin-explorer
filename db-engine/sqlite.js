@@ -62,6 +62,13 @@ const sqlite = () => {
 			assert(info.changes === 1);
 			return info;
 		},
+		getSpkTypeRef: description => {
+			return 'select id from spk_type where description=\'' + description + '\'';
+		},
+		getHexRef: hex => {
+			return 'select id from hex where hex=\'' + hex + '\'';
+		},
+
 		upsertAddress: (text, hex_ref) => {
 			const info = client.prepare('insert into address(address, hex_ref, counter) values (?, (' + hex_ref + '),1) ' +
 				'ON CONFLICT(address) DO UPDATE SET counter = (select counter + 1 from address where address = ?)')

@@ -46,59 +46,65 @@ const profile = {
 	'tx/s': null // new DeltaSigma(0, 0)
 };
 
-const handleTransaction = (raw, block_ref) => {
+const handleTransaction = async (raw, block_ref) => {
 	assert(typeof raw !== 'undefined');
 	assert(typeof block_ref !== 'undefined');
-	const transaction = explore.db.insertTransaction(raw.txid, block_ref);
+	const transaction = await explore.db.insertTransaction(raw.txid, block_ref);
 	// console.log (raw);
 	const voutCrono = new Crono();
-	raw.vout.forEach(vout => {
+	for (let i = 0; i < raw.vout.length; ++i) {
+	// await raw.vout.forEach(async vout => {
+		const vout = raw.vout[i];
 		assert(typeof vout !== 'undefined');
-		explore.db.upsertSpkType(vout.scriptPubKey.type);
+		await explore.db.upsertSpkType(vout.scriptPubKey.type);
 		const transaction_ref = transaction.lastInsertRowid;
-		const utxo = explore.db.insertUtxo(transaction_ref, vout.n, vout.value);
+		const utxo = await explore.db.insertUtxo(transaction_ref, vout.n, vout.value);
 		const utxo_ref = utxo.lastInsertRowid;
-		const spk_type_ref = 'select id from spk_type where description=\'' + vout.scriptPubKey.type + '\'';
-		explore.db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
-		const hex_ref = 'select id from hex where hex=\'' + vout.scriptPubKey.hex + '\'';
-		explore.db.insertUtxoHex(utxo_ref, hex_ref);
+		const spk_type_ref = await explore.db.getSpkTypeRef(vout.scriptPubKey.type);
+		await explore.db.upsertHex(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
+		const hex_ref = await explore.db.getHexRef(vout.scriptPubKey.hex);
+		await explore.db.insertUtxoHex(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
-			vout.scriptPubKey.addresses.forEach(address => {
-				explore.db.upsertAddress(address, hex_ref);
-			});
+			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
+				await explore.db.upsertAddress(vout.scriptPubKey.addresses[j], hex_ref);
+			}
 		}
-	});
+	}
+	// });
 	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new Crono();
-	raw.vin.forEach(vin => {
-		if (!vin.coinbase) {
-			const voutFound = explore.db.selectVout(vin.txid, vin.vout);
+	for (let z = 0; z < raw.vin.length; ++z) {
+		const vin = raw.vin[z];
+		if (!vin.coinbase || true) {
+			const voutFound = await explore.db.selectVout(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
-			explore.db.updateHex(voutFound.hex_id, satoshi);
-			explore.db.updateUtxoSpent(voutFound.id);
+			await explore.db.updateHex(voutFound.hex_id, satoshi);
+			await explore.db.updateUtxoSpent(voutFound.id);
 		}
-	});
+	}
 	profile.db.vin.increment(vinCrono.delta());
 };
 
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	explore.db = require('./db-engine/' + configuration.dbEngine.name);
+	explore.db = await require('./db-engine/' + configuration.dbEngine.name);
 	console.log('Current db-engine: ' + configuration.dbEngine.name);
 	explore.bc = new BitcoinCore(configuration.bitcoinCore);
 	let lastBlock = {};
-	if (explore.db.selectCountBlock().ts_counter > 0) {
-		lastBlock = explore.db.selectLastBlock();
+	const count = (await explore.db.selectCountBlock()).ts_counter;
+	if (count > 0) {
+		lastBlock = await explore.db.selectLastBlock(count);
 	} else {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
+	console.log({lastBlock});
 
-	for (;;) {
+	for (let j = 0; true; ++j) {
 		const profileCrono = new Crono();
 		explore.db.beginTransaction();
 		for (let i = 0; i < 1; ++i) {
@@ -111,11 +117,16 @@ const main = async () => {
 			profile.height = lastBlock.height;
 
 			const dbCrono = new Crono();
-			const insertBlockResult = explore.db.insertBlock(lastBlock);
+			const insertBlockResult = await explore.db.insertBlock(lastBlock);
 			profile.tx.increment(lastBlock.tx.length);
+			for (let z = 0; z < lastBlock.tx.length; ++z) {
+				await handleTransaction(lastBlock.tx[z], insertBlockResult.lastInsertRowid);
+			}
+			/*
 			lastBlock.tx.forEach(raw => {
 				handleTransaction(raw, insertBlockResult.lastInsertRowid);
 			});
+			*/
 			profile.db.query.increment(dbCrono.delta());
 		}
 		const commitCrono = new Crono();

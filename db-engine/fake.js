@@ -53,6 +53,13 @@ const fake = () => {
 		upsertSpkType: type => {
 			return {};
 		},
+		getSpkTypeRef: description => {
+			return 0;
+		},
+		getHexRef: hex => {
+			return 0;
+		},
+
 		upsertAddress: (text, hex_ref) => {
 			return {};
 		},
