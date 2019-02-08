@@ -76,7 +76,7 @@ const handleTransaction = async (raw, block_ref) => {
 	const vinCrono = new Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
-		if (!vin.coinbase || true) {
+		if (!vin.coinbase) {
 			const voutFound = await explore.db.selectVout(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
