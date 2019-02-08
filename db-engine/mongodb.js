@@ -107,37 +107,41 @@ const mongodb = async () => {
 		},
 		commit: () => {
 		},
-		selectCountBlock: async () => {
-			const ts_counter = await clientDb.collection('block').countDocuments();
-			assert(typeof ts_counter !== 'undefined');
-			return {ts_counter};
-		},
-		selectLastBlock: async count => {
-			const block = await clientDb.collection('block').find().skip(count - 1).toArray();
-			assert(block.length === 1);
-			return block[0];
-		},
-		insertBlock: async block => {
-			// height, hash, nextblockhash
-			const insertResult = await clientDb.collection('block').insertOne({
-				height: block.height,
-				hash: block.hash,
-				nextblockhash: block.nextblockhash
-			});
+		block:{
+			selectCount: async () => {
+				const ts_counter = await clientDb.collection('block').countDocuments();
+				assert(typeof ts_counter !== 'undefined');
+				return {ts_counter};
+			},
+			selectLast: async count => {
+				const block = await clientDb.collection('block').find().skip(count - 1).toArray();
+				assert(block.length === 1);
+				return block[0];
+			},
+			insert: async block => {
+				// height, hash, nextblockhash
+				const insertResult = await clientDb.collection('block').insertOne({
+					height: block.height,
+					hash: block.hash,
+					nextblockhash: block.nextblockhash
+				});
 
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			},
 		},
-		insertTransaction: async (txid, block_ref) => {
-			const insertResult = await clientDb.collection('h_transaction').insertOne({
-				txid,
-				block_ref
-			});
+		transaction:{
+			insertTransaction: async (txid, block_ref) => {
+				const insertResult = await clientDb.collection('h_transaction').insertOne({
+					txid,
+					block_ref
+				});
 
-			return {
-				lastInsertRowid: insertResult.insertedId
-			};
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			},
 		},
 		/* eslint-disable no-unused-vars */
 		insertUtxo: async (transaction_ref, vout, value) => {
