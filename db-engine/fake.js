@@ -15,6 +15,16 @@ const fake = () => {
 	let fakeHexId = 0;
 
 	const db = {
+		controlFlow: {
+			stoppedSuccesfully: () => {
+				return true;
+			},
+			hasToStop: () => {
+				return false;
+			},
+			setStopSuccesfully: () => {
+			}
+		},
 		beginTransaction: () => {
 		},
 		commit: () => {

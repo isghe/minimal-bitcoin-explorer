@@ -14,8 +14,8 @@ const mongodb = async () => {
 	const configuration = require('../configuration');
 	const {MongoClient} = require('mongodb');
 
-	const url = configuration.dbEngine.mongo.url;
-	const dbName = configuration.dbEngine.mongo.dbName;
+	const url = configuration.dbEngine.mongo.url; // eslint-disable-line prefer-destructuring
+	const dbName = configuration.dbEngine.mongo.dbName; // eslint-disable-line prefer-destructuring
 
 	const client = await MongoClient.connect(url, {useNewUrlParser: true});
 	console.log('Connected successfully to server');
@@ -62,7 +62,47 @@ const mongodb = async () => {
 	];
 	await createIndexes('utxo_hex', utxoHexIndexes);
 
+	const getControFlawlId = async () => {
+		let ret = null;
+		const controlFlow = await clientDb.collection('controlFlow').find().toArray();
+		if (controlFlow.length === 0) {
+			const insertResult = await clientDb.collection('controlFlow').insertOne({
+				stoppedSuccesfully: true,
+				hasToStop: false
+			});
+			ret = insertResult.insertedId;
+		} else {
+			ret = controlFlow[0]._id;
+		}
+		return ret;
+	};
+
+	const controlFlowId = await getControFlawlId();
+
 	const db = {
+		controlFlow: {
+			stoppedSuccesfully: async () => {
+				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
+				assert(control.length === 1);
+				await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false}});
+
+				return control[0].stoppedSuccesfully;
+			},
+			hasToStop: async () => {
+				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
+				assert(control.length === 1);
+				return control[0].hasToStop;
+			},
+			setStopSuccesfully: async () => {
+				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: true, hasToStop: false}});
+				return updateResult;
+			},
+			pleaseStop: async () => {
+				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false, hasToStop: true}});
+				return updateResult;
+			}
+		},
+
 		beginTransaction: () => {
 		},
 		commit: () => {
@@ -149,7 +189,7 @@ const mongodb = async () => {
 					counter: 1
 				});
 			} else {
-				const updateResult = await clientDb.collection('address').updateOne({address}, {$set: {counter: spkType[0].counter + 1}});
+				await clientDb.collection('address').updateOne({address}, {$set: {counter: spkType[0].counter + 1}});
 			}
 			return {};
 		},
@@ -164,7 +204,7 @@ const mongodb = async () => {
 					counter: 1
 				});
 			} else {
-				const updateResult = await clientDb.collection('hex').updateOne({hex}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
+				await clientDb.collection('hex').updateOne({hex}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
 			}
 			return {};
 		},

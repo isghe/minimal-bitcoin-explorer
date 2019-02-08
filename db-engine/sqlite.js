@@ -17,6 +17,16 @@ const sqlite = () => {
 	});
 
 	const db = {
+		controlFlow: {
+			stoppedSuccesfully: () => {
+				return true;
+			},
+			hasToStop: () => {
+				return false;
+			},
+			setStopSuccesfully: () => {
+			}
+		},
 		beginTransaction: () => {
 			client.prepare('begin transaction')
 				.run();

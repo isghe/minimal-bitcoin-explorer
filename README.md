@@ -7,6 +7,7 @@ The stage is to be considered experimental, and collected data still need valida
 * [Configuration](#configuration)
 * [Run](#run)
 * [Sniffing](#sniffing)
+* [Stop](#stop)
 * [DB-Schema](#db-schema)
 
 ## Installation
@@ -63,6 +64,16 @@ Current db-engine: fake
 The application build the database throw bitcoind's RPC-APIs:
 * ~~`getblockhash`~~
 * `getblock`
+
+## Stop
+To safe stop `sqlite` or `fake` db-engine simply kill node process;
+To safe stop `mongodb` db-engine, run the command:
+```
+$ node please-stop-mongodb-explorer.js
+…
+Stopped succesfully
+```
+After you see the message "Stopped succesfully" you can kill the node process.
 
 ## Sniffing
 
