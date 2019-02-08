@@ -245,7 +245,7 @@ const mongodb = async () => {
 			}
 		},
 		vout: {
-			select: async (txid, vout) => {
+			selectOld: async (txid, vout) => {
 				const transaction = await clientDb.collection('h_transaction').find({txid}).toArray();
 				assert(transaction.length === 1);
 				const utxo = await clientDb.collection('utxo').find({transaction_ref: transaction[0]._id, vout}).toArray();
@@ -262,6 +262,34 @@ const mongodb = async () => {
 					satoshi: hex[0].satoshi,
 					hex_id: hex[0]._id
 				};
+			},
+			/*
+			> db.h_transaction.aggregate({$match: {txid:'f925f26deb2dc4696be8782ab7ad9493d04721b28ee69a09d7dfca51b863ca23'}}, { $lookup:{ from:'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo' } } ,{$unwind:'$utxo'}, {$match:{"utxo.vout": 0}},{ $lookup:{ from:'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex' }}, {$unwind:'$utxo_hex'}, {$lookup:{ from:'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
+{$project:{'utxo._id':1, 'utxo.value':1, 'hex._id':1, 'hex.satoshi':1, 'utxo.vout':1}});
+
+{ "_id" : ObjectId("5c5da73e3e549525ab0a7dc2"), "utxo" : { "_id" : ObjectId("5c5da73e3e549525ab0a7dc3"), "vout" : 0, "value" : 50 }, "hex" : [ { "_id" : ObjectId("5c5da73e3e549525ab0a7dc4"), "satoshi" : 5000000000 } ] }
+			*/
+			select: async (txid, vout) => {
+			// https://www.mongodb.com/blog/post/joins-and-other-aggregation-enhancements-coming-in-mongodb-3-2-part-1-of-3-introduction
+
+				const result = await clientDb.collection('h_transaction').aggregate(
+					{$match: {txid}},
+					{$lookup: {from: 'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo'}},
+					{$unwind: '$utxo'}, {$match: {'utxo.vout': vout}},
+					{$lookup: {from: 'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
+					{$unwind: '$utxo_hex'},
+					{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
+					{$project: {'utxo._id': 1, 'utxo.value': 1, 'hex._id': 1, 'hex.satoshi': 1, 'utxo.vout': 1}})
+					.toArray();
+				assert(result.length === 1);
+				assert(result[0].hex.length === 1);
+				const ret = {
+					id: result[0].utxo._id,
+					value: result[0].utxo.value,
+					satoshi: result[0].hex[0].satoshi,
+					hex_id: result[0].hex[0]._id
+				};
+				return ret;
 			}
 		}
 	};
