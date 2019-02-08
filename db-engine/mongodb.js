@@ -165,12 +165,12 @@ const mongodb = async () => {
 				const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
-					const insertResult = await clientDb.collection('spk_type').insertOne({
+					await clientDb.collection('spk_type').insertOne({
 						description: type,
 						counter: 1
 					});
 				} else {
-					const updateResult = await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
+					await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
 				}
 				return {};
 			},
@@ -192,7 +192,7 @@ const mongodb = async () => {
 				const spkType = await clientDb.collection('hex').find({hex}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
-					const insertResult = await clientDb.collection('hex').insertOne({
+					await clientDb.collection('hex').insertOne({
 						hex,
 						spk_type_ref,
 						satoshi,
@@ -216,7 +216,7 @@ const mongodb = async () => {
 				const spkType = await clientDb.collection('address').find({address}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
-					const insertResult = await clientDb.collection('address').insertOne({
+					await clientDb.collection('address').insertOne({
 						address,
 						hex_ref,
 						counter: 1
