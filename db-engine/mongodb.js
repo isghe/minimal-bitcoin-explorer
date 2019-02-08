@@ -139,7 +139,7 @@ const mongodb = async () => {
 				lastInsertRowid: insertResult.insertedId
 			};
 		},
-		/* eslint-disable no-unused-vars */
+
 		insertUtxo: async (transaction_ref, vout, value) => {
 			const insertResult = await clientDb.collection('utxo').insertOne({
 				transaction_ref,
@@ -156,24 +156,22 @@ const mongodb = async () => {
 			const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
 			assert(spkType.length <= 1);
 			if (spkType.length === 0) {
-				const insertResult = await clientDb.collection('spk_type').insertOne({
+				await clientDb.collection('spk_type').insertOne({
 					description: type,
 					counter: 1
 				});
 			} else {
-				const updateResult = await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
+				await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
 			}
 			return {};
 		},
 
 		getSpkTypeRef: async description => {
-			// return 'select id from spk_type where description=\'' + description + '\'';
 			const ret = await clientDb.collection('spk_type').find({description}).toArray();
 			assert(ret.length === 1);
 			return ret[0]._id;
 		},
 		getHexRef: async hex => {
-			// return 'select id from hex where hex=\'' + hex + '\'';
 			const ret = await clientDb.collection('hex').find({hex}).toArray();
 			assert(ret.length === 1);
 			return ret[0]._id;
@@ -183,7 +181,7 @@ const mongodb = async () => {
 			const spkType = await clientDb.collection('address').find({address}).toArray();
 			assert(spkType.length <= 1);
 			if (spkType.length === 0) {
-				const insertResult = await clientDb.collection('address').insertOne({
+				await clientDb.collection('address').insertOne({
 					address,
 					hex_ref,
 					counter: 1
@@ -197,7 +195,7 @@ const mongodb = async () => {
 			const spkType = await clientDb.collection('hex').find({hex}).toArray();
 			assert(spkType.length <= 1);
 			if (spkType.length === 0) {
-				const insertResult = await clientDb.collection('hex').insertOne({
+				await clientDb.collection('hex').insertOne({
 					hex,
 					spk_type_ref,
 					satoshi,
@@ -209,7 +207,6 @@ const mongodb = async () => {
 			return {};
 		},
 		insertUtxoHex: async (utxo_ref, hex_ref) => {
-			// console.log (JSON.stringify ({utxo_ref, hex_ref}));
 			const insertResult = await clientDb.collection('utxo_hex').insertOne({
 				utxo_ref,
 				hex_ref
@@ -233,7 +230,6 @@ const mongodb = async () => {
 			assert(transaction.length === 1);
 			const utxo = await clientDb.collection('utxo').find({transaction_ref: transaction[0]._id, vout}).toArray();
 			assert(utxo.length === 1);
-			// console.log (JSON.stringify (utxo));
 			const utxo_hex = await clientDb.collection('utxo_hex').find({utxo_ref: utxo[0]._id}).toArray();
 			assert(utxo_hex.length === 1);
 			const hex = await clientDb.collection('hex').find({_id: utxo_hex[0].hex_ref}).toArray();
@@ -251,7 +247,6 @@ const mongodb = async () => {
 			const updateResult = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
 			return updateResult;
 		}
-		/* eslint-enable no-unused-vars */
 	};
 	return db;
 };
