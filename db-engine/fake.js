@@ -29,80 +29,92 @@ const fake = () => {
 		},
 		commit: () => {
 		},
-		selectCountBlock: () => {
-			const ret = {
-				ts_counter: 0
-			};
-			if (typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined') {
-				ret.ts_counter = 1;
+		block: {
+			selectCount: () => {
+				const ret = {
+					ts_counter: 0
+				};
+				if (typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined') {
+					ret.ts_counter = 1;
+				}
+				return ret;
+			},
+			selectLast: () => {
+				assert(typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined');
+				return {
+					nextblockhash: configuration.dbEngine.fake.nextblockhash
+				};
+			},
+			/* eslint-disable no-unused-vars */
+			insert: block => {
+				return {
+					lastInsertRowid: ++fakeBlockIndex
+				};
 			}
-			return ret;
 		},
-		selectLastBlock: () => {
-			assert(typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined');
-			return {
-				nextblockhash: configuration.dbEngine.fake.nextblockhash
-			};
+		transaction: {
+			insert: (txid, block_ref) => {
+				return {
+					lastInsertRowid: ++fakeTransactionIndex
+				};
+			}
 		},
-		/* eslint-disable no-unused-vars */
-		insertBlock: block => {
-			return {
-				lastInsertRowid: ++fakeBlockIndex
-			};
+		utxo: {
+			insert: (transaction_ref, vout, value) => {
+				return {
+					lastInsertRowid: ++fakeUtxo
+				};
+			},
+			updateSpent: id => {
+				return {};
+			}
 		},
-		insertTransaction: (txid, block_ref) => {
-			return {
-				lastInsertRowid: ++fakeTransactionIndex
-			};
+		spkType: {
+			upsert: type => {
+				return {};
+			},
+			getRef: description => {
+				return 0;
+			}
 		},
-		insertUtxo: (transaction_ref, vout, value) => {
-			return {
-				lastInsertRowid: ++fakeUtxo
-			};
+		hex: {
+			getRef: hex => {
+				return 0;
+			},
+			upsert: (hex, spk_type_ref, satoshi) => {
+				assert(typeof hex !== 'undefined');
+				util.assert.isSatoshi(satoshi);
+				return {};
+			},
+			update: (hex_id, satoshi) => {
+				assert(typeof hex_id !== 'undefined');
+				util.assert.isSatoshi(satoshi);
+				return {};
+			}
 		},
-		upsertSpkType: type => {
-			return {};
+		address: {
+			upsert: (text, hex_ref) => {
+				return {};
+			}
 		},
-		getSpkTypeRef: description => {
-			return 0;
+		utxoHex: {
+			insert: (utxo_ref, ref) => {
+				return {
+					lastInsertRowid: ++fakeUtxoHex
+				};
+			}
 		},
-		getHexRef: hex => {
-			return 0;
-		},
-
-		upsertAddress: (text, hex_ref) => {
-			return {};
-		},
-		upsertHex: (hex, spk_type_ref, satoshi) => {
-			assert(typeof hex !== 'undefined');
-			util.assert.isSatoshi(satoshi);
-			return {};
-		},
-		insertUtxoHex: (utxo_ref, ref) => {
-			return {
-				lastInsertRowid: ++fakeUtxoHex
-			};
-		},
-		updateHexDelta: (hex, deltaSatoshi) => {
-			assert(typeof hex !== 'undefined');
-			return {};
-		},
-		updateHex: (hex_id, satoshi) => {
-			assert(typeof hex_id !== 'undefined');
-			util.assert.isSatoshi(satoshi);
-			return {};
-		},
-		selectVout: (txid, vout) => {
-			return {
-				id: fakeUtxo,
-				value: 1,
-				satoshi: 1 * 100000000,
-				hex_id: ++fakeHexId
-			};
-		},
-		updateUtxoSpent: id => {
-			return {};
+		vout: {
+			select: (txid, vout) => {
+				return {
+					id: fakeUtxo,
+					value: 1,
+					satoshi: 1 * 100000000,
+					hex_id: ++fakeHexId
+				};
+			}
 		}
+
 		/* eslint-enable no-unused-vars */
 	};
 	return db;
