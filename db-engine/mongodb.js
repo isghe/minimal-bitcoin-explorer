@@ -62,6 +62,11 @@ const mongodb = async () => {
 	];
 	await createIndexes('utxo_hex', utxoHexIndexes);
 
+	const utxoHex = [
+		{index: {hex: -1}, options: {unique: true}}
+	];
+	await createIndexes('hex', utxoHex);
+
 	const getControFlawlId = async () => {
 		let ret = null;
 		const controlFlow = await clientDb.collection('controlFlow').find().toArray();
