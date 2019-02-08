@@ -29,11 +29,20 @@ $ cp configuration-template.js configuration.js
 Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), `username` and `password`, and set the right db-engine for you; available db-engines are:
 * `sqlite`
 * `fake`
-* `mongodb` coming soon
+* `mongodb`
 
 `sqlite` will create the database in `explore.sqlite`;
 
 `fake` will not create any database, but it will iterate throw all the blocks, starting from `configuration.dbEngine.fake.nextblockhash`; if not defined, it will begin from `genesis` block.
+
+`mongodb` will create the database, based on the configuration.js
+
+```
+mongo:{
+	url : 'mongodb://localhost:27017',
+	dbName : 'explore'
+}
+```
 
 ## Run
 ```
