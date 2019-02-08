@@ -20,6 +20,7 @@ $ sqlite3 explore.sqlite < sql/vv_utxo_hex.sql
 the following `npm` dependencies will be installed:
 * better-sqlite3
 * bitcoin-core
+* mongodb
 * xo
 
 ## Configuration
