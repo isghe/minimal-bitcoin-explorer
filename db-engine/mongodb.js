@@ -195,7 +195,7 @@ const mongodb = async () => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
 				const hash = util.sha256(hex);
-				const spkType = await clientDb.collection('hex').find({hex}).toArray();
+				const spkType = await clientDb.collection('hex').find({hash}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
 					await clientDb.collection('hex').insertOne({
