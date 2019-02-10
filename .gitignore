@@ -1,6 +1,6 @@
 node_modules
 configuration.js
-explore.sqlite
+*.sqlite
 package-lock.json
 .vscode
 *.log
