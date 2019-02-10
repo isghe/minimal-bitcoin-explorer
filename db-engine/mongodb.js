@@ -32,7 +32,7 @@ const mongodb = async () => {
 	await createIndexes('block', blockIndexes);
 
 	const transactionIndexes = [
-		{index: {txid: -1}},
+		// {index: {txid: -1}},
 		{index: {txid: -1, block_ref: -1}, options: {unique: true}}
 	];
 
@@ -40,7 +40,7 @@ const mongodb = async () => {
 
 	const utxoIndexes = [
 		{index: {transaction_ref: -1, vout: -1}, options: {unique: true}},
-		{index: {transaction_ref: -1}}
+		// {index: {transaction_ref: -1}}
 	];
 	await createIndexes('utxo', utxoIndexes);
 
