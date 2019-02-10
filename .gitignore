@@ -3,8 +3,7 @@ configuration.js
 explore.sqlite
 package-lock.json
 .vscode
-explore.log
-fake.log
+*.log
 nohup.out*
 explore.sqlite-journal
 mongodb
