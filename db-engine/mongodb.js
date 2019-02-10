@@ -39,7 +39,8 @@ const mongodb = async () => {
 	await createIndexes('h_transaction', transactionIndexes);
 
 	const utxoIndexes = [
-		{index: {transaction_ref: -1, vout: -1}, options: {unique: true}}
+		{index: {transaction_ref: -1, vout: -1}, options: {unique: true}},
+		{index: {transaction_ref: -1}}
 	];
 	await createIndexes('utxo', utxoIndexes);
 
@@ -54,12 +55,13 @@ const mongodb = async () => {
 	await createIndexes('address', addressIndexes);
 
 	const utxoHexIndexes = [
-		{index: {utxo_ref: -1}, options: {unique: true}}
+		{index: {utxo_ref: -1}, options: {unique: true}},
+		{index: {hex_ref: -1}}
 	];
 	await createIndexes('utxo_hex', utxoHexIndexes);
 
 	const hexIndexes = [
-		{index: {hex: 'hashed'}}
+		{index: {hash: -1}, options: {unique: true}}
 	];
 	await createIndexes('hex', hexIndexes);
 
@@ -183,26 +185,28 @@ const mongodb = async () => {
 			}
 		},
 		hex: {
-			getRef: async hex => {
-				assert(typeof hex !== 'undefined');
-				const ret = await clientDb.collection('hex').find({hex}).toArray();
+			getRefByHash: async hash => {
+				assert(typeof hash !== 'undefined');
+				const ret = await clientDb.collection('hex').find({hash}).toArray();
 				assert(ret.length === 1);
 				return ret[0]._id;
 			},
 			upsert: async (hex, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
+				const hash = util.sha256(hex);
 				const spkType = await clientDb.collection('hex').find({hex}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
 					await clientDb.collection('hex').insertOne({
 						hex,
+						hash,
 						spk_type_ref,
 						satoshi,
 						counter: 1
 					});
 				} else {
-					await clientDb.collection('hex').updateOne({hex}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
+					await clientDb.collection('hex').updateOne({hash}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
 				}
 				return {};
 			},

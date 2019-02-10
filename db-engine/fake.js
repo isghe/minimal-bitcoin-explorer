@@ -78,7 +78,7 @@ const fake = () => {
 			}
 		},
 		hex: {
-			getRef: hex => {
+			getRefByHash: hash => {
 				return 0;
 			},
 			upsert: (hex, spk_type_ref, satoshi) => {

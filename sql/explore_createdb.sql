@@ -51,7 +51,8 @@ create table spk_type(
 
 create table hex(
 	id integer primary key not null,
-	hex text unique not null,
+	hex text not null,
+	hash text unique not null,
 	spk_type_ref integer references spk_type(id) not null,
 	counter integer not null,
 	satoshi integer not null

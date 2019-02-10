@@ -90,15 +90,16 @@ const sqlite = () => {
 			}
 		},
 		hex: {
-			getRef: hex => {
-				return 'select id from hex where hex=\'' + hex + '\'';
+			getRefByHash: hash => {
+				return 'select id from hex where hash=\'' + hash + '\'';
 			},
 			upsert: (hex, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
-				const info = client.prepare('insert into hex(hex, spk_type_ref, counter, satoshi) values (?, (' + spk_type_ref + '),1, ?) ' +
-					'ON CONFLICT(hex) DO UPDATE SET counter = (select counter + 1 from hex where hex = ?), satoshi = ? + (select satoshi where hex = ?)')
-					.run(hex, satoshi, hex, satoshi, hex);
+				const hash = util.sha256(hex);
+				const info = client.prepare('insert into hex(hex, hash, spk_type_ref, counter, satoshi) values (?, ?, (' + spk_type_ref + '),1, ?) ' +
+					'ON CONFLICT(hash) DO UPDATE SET counter = (select counter + 1 from hex where hash = ?), satoshi = ? + (select satoshi where hash = ?)')
+					.run(hex, hash, satoshi, hash, satoshi, hash);
 				// console.log (info);
 				assert(info.changes === 1);
 				return info;

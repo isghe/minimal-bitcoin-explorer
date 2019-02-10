@@ -62,7 +62,7 @@ const handleTransaction = async (raw, block_ref) => {
 		const utxo_ref = utxo.lastInsertRowid;
 		const spk_type_ref = await explore.db.spkType.getRef(vout.scriptPubKey.type);
 		await explore.db.hex.upsert(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
-		const hex_ref = await explore.db.hex.getRef(vout.scriptPubKey.hex);
+		const hex_ref = await explore.db.hex.getRefByHash(util.sha256(vout.scriptPubKey.hex));
 		await explore.db.utxoHex.insert(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
