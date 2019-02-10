@@ -4,11 +4,7 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-
-const assertSatoshi = satoshi => {
-	assert(typeof satoshi !== 'undefined');
-	assert(Number.isInteger(satoshi));
-};
+const util = require('../lib/util.js');
 
 const mongodb = async () => {
 	const configuration = require('../configuration');
@@ -62,10 +58,10 @@ const mongodb = async () => {
 	];
 	await createIndexes('utxo_hex', utxoHexIndexes);
 
-	const utxoHex = [
-		{index: {hex: -1}, options: {unique: true}}
+	const hexIndexes = [
+		{index: {hex: 'hashed'}}
 	];
-	await createIndexes('hex', utxoHex);
+	await createIndexes('hex', hexIndexes);
 
 	const getControFlawlId = async () => {
 		let ret = null;
@@ -188,12 +184,14 @@ const mongodb = async () => {
 		},
 		hex: {
 			getRef: async hex => {
-				// return 'select id from hex where hex=\'' + hex + '\'';
+				assert(typeof hex !== 'undefined');
 				const ret = await clientDb.collection('hex').find({hex}).toArray();
 				assert(ret.length === 1);
 				return ret[0]._id;
 			},
 			upsert: async (hex, spk_type_ref, satoshi) => {
+				assert(typeof hex !== 'undefined');
+				util.assert.isSatoshi(satoshi);
 				const spkType = await clientDb.collection('hex').find({hex}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
@@ -210,7 +208,7 @@ const mongodb = async () => {
 			},
 			update: async (hex_id, satoshi) => {
 				assert(typeof hex_id !== 'undefined');
-				assertSatoshi(satoshi);
+				util.assert.isSatoshi(satoshi);
 				const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
 
 				return updateResult;
