@@ -64,34 +64,39 @@ const handleTransaction = async (raw, block_ref) => {
 	// console.log (raw);
 	const voutCrono = new Crono();
 	return Bluebird.each(raw.vout, async vout => {
-	// for (let i = 0; i < raw.vout.length; ++i) {
-	// await raw.vout.forEach(async vout => {
-		// const vout = raw.vout[i];
 		assert(typeof vout !== 'undefined');
-		await explore.db.spkType.upsert(vout.scriptPubKey.type);
-		const transaction_ref = transaction.lastInsertRowid;
-		const utxo = await explore.db.utxo.insert(transaction_ref, vout.n, vout.value);
-		const utxo_ref = utxo.lastInsertRowid;
-		const spk_type_ref = await explore.db.spkType.getRef(vout.scriptPubKey.type);
-		await explore.db.hex.upsert(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
-		if (util.sha256(vout.scriptPubKey.hex) === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
-			console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
-		}
-		const hex_ref = await explore.db.hex.getRefByHash(util.sha256(vout.scriptPubKey.hex));
-		await explore.db.utxoHex.insert(utxo_ref, hex_ref);
-		if (vout.scriptPubKey.addresses) {
-			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
-				await explore.db.address.upsert(vout.scriptPubKey.addresses[j], hex_ref);
-			}
-		}
-	// }
-	// });
+		return explore.db.spkType.upsert(vout.scriptPubKey.type)
+			.then(() => {
+				const transaction_ref = transaction.lastInsertRowid;
+				return explore.db.utxo.insert(transaction_ref, vout.n, vout.value);
+			})
+			.then(async utxo => {
+				const utxo_ref = utxo.lastInsertRowid;
+				const spk_type_ref = await explore.db.spkType.getRef(vout.scriptPubKey.type);
+				return explore.db.hex.upsert(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value))
+					.then(() => {
+						if (util.sha256(vout.scriptPubKey.hex) === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
+							console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
+						}
+						return explore.db.hex.getRefByHash(util.sha256(vout.scriptPubKey.hex));
+					})
+					.then(hex_ref => {
+						return explore.db.utxoHex.insert(utxo_ref, hex_ref)
+							.then(async () => {
+								if (vout.scriptPubKey.addresses) {
+									for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
+										await explore.db.address.upsert(vout.scriptPubKey.addresses[j], hex_ref);
+									}
+								}
+							});
+					});
+			});
 	})
+
 		.then(async () => {
 			profile.db.vout.increment(voutCrono.delta());
 
 			const vinCrono = new Crono();
-			// for (let z = 0; z < raw.vin.length; ++z) {
 			return Bluebird.each(raw.vin, async vin => {
 				if (!vin.coinbase) {
 					const voutFound = await explore.db.vout.select(vin.txid, vin.vout);
@@ -104,9 +109,8 @@ const handleTransaction = async (raw, block_ref) => {
 			})
 				.then(() => {
 					profile.db.vin.increment(vinCrono.delta());
-					return 'ciao';
+					return {block_ref, txid: raw.txid};
 				});
-			// }
 		});
 };
 
@@ -130,7 +134,7 @@ const handleBlock = async lastBlock => {
 		const insertBlockResult = await explore.db.block.insert(lastBlock);
 		profile.tx.increment(lastBlock.tx.length);
 		for (let z = 0; z < lastBlock.tx.length; ++z) {
-			/* const handleTransactionResult = */ await handleTransaction(lastBlock.tx[z], insertBlockResult.lastInsertRowid);
+			const handleTransactionResult = await handleTransaction(lastBlock.tx[z], insertBlockResult.lastInsertRowid);
 			// console.log({handleTransactionResult});
 		}
 		/*
