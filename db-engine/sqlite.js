@@ -116,7 +116,7 @@ const sqlite = () => {
 		address: {
 			upsert: (text, hex_ref) => {
 				const info = client.prepare('insert into address(address, hex_ref, counter) values (?, (' + hex_ref + '),1) ' +
-					'ON CONFLICT(address) DO UPDATE SET counter = (select counter + 1 from address where address = ?)')
+					'ON CONFLICT(address, hex_ref) DO UPDATE SET counter = (select counter + 1 from address where address = ? and hex_ref = (' + hex_ref + '))')
 					.run(text, text);
 				assert(info.changes === 1);
 				return info;

@@ -68,8 +68,9 @@ CREATE INDEX 'utxo_hex_hex_ref' ON 'utxo_hex'('hex_ref');
 
 create table address(
 	id integer primary key not null,
-	address text unique not null, 
+	address text not null,
 	hex_ref integer references hex(id) not null,
-	counter integer not null
+	counter integer not null,
+
+	constraint unq_address unique (address, hex_ref)
 );
-CREATE INDEX 'address_hex_ref' ON 'address'('hex_ref');

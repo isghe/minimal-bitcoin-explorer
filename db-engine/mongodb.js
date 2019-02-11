@@ -39,18 +39,18 @@ const mongodb = async () => {
 	await createIndexes('h_transaction', transactionIndexes);
 
 	const utxoIndexes = [
-		{index: {transaction_ref: -1, vout: -1}, options: {unique: true}},
+		{index: {transaction_ref: -1, vout: -1}, options: {unique: true}}
 		// {index: {transaction_ref: -1}}
 	];
 	await createIndexes('utxo', utxoIndexes);
 
 	const spkTypeIndexes = [
-		{index: {description: -1, vout: -1}, options: {unique: true}}
+		{index: {description: -1}, options: {unique: true}}
 	];
 	await createIndexes('spk_type', spkTypeIndexes);
 
 	const addressIndexes = [
-		{index: {address: -1, vout: -1}, options: {unique: true}}
+		{index: {address: -1, hex_ref: -1}, options: {unique: true}}
 	];
 	await createIndexes('address', addressIndexes);
 
@@ -220,7 +220,7 @@ const mongodb = async () => {
 		},
 		address: {
 			upsert: async (address, hex_ref) => {
-				const spkType = await clientDb.collection('address').find({address}).toArray();
+				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
 					await clientDb.collection('address').insertOne({
@@ -229,7 +229,7 @@ const mongodb = async () => {
 						counter: 1
 					});
 				} else {
-					await clientDb.collection('address').updateOne({address}, {$set: {counter: spkType[0].counter + 1}});
+					await clientDb.collection('address').updateOne({address, hex_ref}, {$set: {counter: spkType[0].counter + 1}});
 				}
 				return {};
 			}
