@@ -194,20 +194,22 @@ const mongodb = async () => {
 			upsert: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
+				const ret = {};
 				const spkType = await clientDb.collection('hex').find({hash}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
-					await clientDb.collection('hex').insertOne({
+					const insertResult = await clientDb.collection('hex').insertOne({
 						hex,
 						hash,
 						spk_type_ref,
 						satoshi,
 						counter: 1
 					});
+					ret.lastInsertRowid = insertResult.insertedId;
 				} else {
 					await clientDb.collection('hex').updateOne({hash}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
 				}
-				return {};
+				return ret;
 			},
 			update: async (hex_id, satoshi) => {
 				assert(typeof hex_id !== 'undefined');
