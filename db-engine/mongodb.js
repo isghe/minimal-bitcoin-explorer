@@ -33,9 +33,35 @@ const mongodb = async () => {
 
 	const transactionIndexes = [
 		// {index: {txid: -1}},
-		{index: {txid: -1, block_ref: -1}, options: {unique: true}}
+		{index: {txid: -1, block_ref: -1}, options: {unique: true}},
+		{index: {txid: -1}, options: {
+			unique: true,
+			partialFilterExpression: {
+				$and: [
+					{
+						txid: {
+							$lt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+						}
+					},
+					{
+						txid: {
+							$gt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+						}
+					},
+					{
+						txid: {
+							$lt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+						}
+					},
+					{
+						txid: {
+							$gt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+						}
+					}
+				]
+			}
+		}}
 	];
-
 	await createIndexes('h_transaction', transactionIndexes);
 
 	const utxoIndexes = [
