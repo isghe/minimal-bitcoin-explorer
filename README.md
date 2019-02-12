@@ -33,6 +33,7 @@ Edit `configuration.js` setting the right `port` (`rpcport` in `bitcoin.conf`), 
 * `sqlite`
 * `fake`
 * `mongodb`
+* `PostgreSQL` (coming soon)
 
 `sqlite` will create the database in `explore.sqlite`;
 
