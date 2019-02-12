@@ -310,7 +310,8 @@ const mongodb = async () => {
 				const result = await clientDb.collection('h_transaction').aggregate(
 					{$match: {txid}},
 					{$lookup: {from: 'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo'}},
-					{$unwind: '$utxo'}, {$match: {'utxo.vout': vout}},
+					{$unwind: '$utxo'},
+					{$match: {'utxo.vout': vout, 'utxo.spent': false}},
 					{$lookup: {from: 'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
 					{$unwind: '$utxo_hex'},
 					{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
