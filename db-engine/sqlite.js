@@ -99,9 +99,8 @@ const sqlite = () => {
 				const info = client.prepare('insert into hex(hex, hash, spk_type_ref, counter, satoshi) values (?, ?, (' + spk_type_ref + '),1, ?) ' +
 					'ON CONFLICT(hash) DO UPDATE SET counter = (select counter + 1 from hex where hash = ?), satoshi = ? + (select satoshi where hash = ?)')
 					.run(hex, hash, satoshi, hash, satoshi, hash);
-				// console.log (info);
 				assert(info.changes === 1);
-				return info;
+				return {};
 			},
 			update: (hex_id, satoshi) => {
 				assert(typeof hex_id !== 'undefined');
