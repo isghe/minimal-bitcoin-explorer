@@ -87,6 +87,9 @@ const sqlite = () => {
 			},
 			getRef: description => {
 				return 'select id from spk_type where description=\'' + description + '\'';
+			},
+			getCachedRefIf: description => {
+				return db.spkType.getRef(description);
 			}
 		},
 		hex: {

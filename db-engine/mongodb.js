@@ -107,7 +107,7 @@ const mongodb = async () => {
 	};
 
 	const controlFlowId = await getControFlawlId();
-
+	const spkTypeCache = {};
 	const db = {
 		controlFlow: {
 			stoppedSuccesfully: async () => {
@@ -204,10 +204,16 @@ const mongodb = async () => {
 				return {};
 			},
 			getRef: async description => {
-				// return 'select id from spk_type where description=\'' + description + '\'';
 				const ret = await clientDb.collection('spk_type').find({description}).toArray();
 				assert(ret.length === 1);
 				return ret[0]._id;
+			},
+			getCachedRefIf: async description => {
+				if (typeof spkTypeCache[description] === 'undefined') {
+					spkTypeCache[description] = await db.spkType.getRef(description);
+					console.log(spkTypeCache);
+				}
+				return spkTypeCache[description];
 			}
 		},
 		hex: {

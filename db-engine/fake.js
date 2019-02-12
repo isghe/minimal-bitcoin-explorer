@@ -75,6 +75,9 @@ const fake = () => {
 			},
 			getRef: description => {
 				return 0;
+			},
+			getCachedRefIf: description => {
+				return db.spkType.getRef(description);
 			}
 		},
 		hex: {
