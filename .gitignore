@@ -8,4 +8,5 @@ nohup.out*
 explore.sqlite-journal
 mongodb
 backup
+dump
 
