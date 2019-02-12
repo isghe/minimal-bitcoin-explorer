@@ -191,10 +191,9 @@ const mongodb = async () => {
 				assert(ret.length === 1);
 				return ret[0]._id;
 			},
-			upsert: async (hex, spk_type_ref, satoshi) => {
+			upsert: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
-				const hash = util.sha256(hex);
 				const spkType = await clientDb.collection('hex').find({hash}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {

@@ -61,11 +61,12 @@ const handleTransaction = async (raw, block_ref) => {
 		const utxo = await explore.db.utxo.insert(transaction_ref, vout.n, vout.value);
 		const utxo_ref = utxo.lastInsertRowid;
 		const spk_type_ref = await explore.db.spkType.getRef(vout.scriptPubKey.type);
-		await explore.db.hex.upsert(vout.scriptPubKey.hex, spk_type_ref, util.bitcoinToSatoshi(vout.value));
+		const hash = util.sha256(vout.scriptPubKey.hex);
+		await explore.db.hex.upsert(vout.scriptPubKey.hex, hash, spk_type_ref, util.bitcoinToSatoshi(vout.value));
 		if (util.sha256(vout.scriptPubKey.hex) === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
 			console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
 		}
-		const hex_ref = await explore.db.hex.getRefByHash(util.sha256(vout.scriptPubKey.hex));
+		const hex_ref = await explore.db.hex.getRefByHash(hash);
 		await explore.db.utxoHex.insert(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
@@ -80,6 +81,7 @@ const handleTransaction = async (raw, block_ref) => {
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
+			// txid, vout -> value, satoshi, hex_id, utxo_id
 			const voutFound = await explore.db.vout.select(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
