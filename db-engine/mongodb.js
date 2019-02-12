@@ -252,13 +252,14 @@ const mongodb = async () => {
 			}
 		},
 		address: {
-			upsert: async (address, hex_ref) => {
+			upsert: async (address, hex_ref, spk_type_ref) => {
 				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
 					await clientDb.collection('address').insertOne({
 						address,
 						hex_ref,
+						spk_type_ref,
 						counter: 1
 					});
 				} else {

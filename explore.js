@@ -73,7 +73,7 @@ const handleTransaction = async (raw, block_ref) => {
 		await explore.db.utxoHex.insert(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
-				await explore.db.address.upsert(vout.scriptPubKey.addresses[j], hex_ref);
+				await explore.db.address.upsert(vout.scriptPubKey.addresses[j], hex_ref, spk_type_ref);
 			}
 		}
 	}

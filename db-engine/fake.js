@@ -96,7 +96,7 @@ const fake = () => {
 			}
 		},
 		address: {
-			upsert: (text, hex_ref) => {
+			upsert: (text, hex_ref, /* spk_type_ref */) => {
 				return {};
 			}
 		},
