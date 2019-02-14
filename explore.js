@@ -68,7 +68,7 @@ const handleTransaction = async (raw, block_ref) => {
 		}
 		let hex_ref = hexUpsertResult.lastInsertRowid;
 		if (typeof hex_ref === 'undefined') {
-			hex_ref = await explore.db.hex.getRefByHash(hash);
+			hex_ref = await explore.db.hex.getCachedRefByHashIf(hash);
 		}
 		await explore.db.utxoHex.insert(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {

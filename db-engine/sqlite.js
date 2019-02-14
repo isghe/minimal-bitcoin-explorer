@@ -96,6 +96,9 @@ const sqlite = () => {
 			getRefByHash: hash => {
 				return 'select id from hex where hash=\'' + hash + '\'';
 			},
+			getCachedRefByHashIf: async hash => {
+				return db.hex.getRefByHash(hash);
+			},
 			upsert: (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);

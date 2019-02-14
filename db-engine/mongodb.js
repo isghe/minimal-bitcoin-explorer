@@ -108,6 +108,7 @@ const mongodb = async () => {
 
 	const controlFlowId = await getControFlawlId();
 	const spkTypeCache = {};
+	const hexCache = {};
 	const db = {
 		controlFlow: {
 			stoppedSuccesfully: async () => {
@@ -222,6 +223,12 @@ const mongodb = async () => {
 				const ret = await clientDb.collection('hex').find({hash}).toArray();
 				assert(ret.length === 1);
 				return ret[0]._id;
+			},
+			getCachedRefByHashIf: async hash => {
+				if (typeof hexCache[hash] === 'undefined') {
+					hexCache[hash] = await db.hex.getRefByHash(hash);
+				}
+				return hexCache[hash];
 			},
 			upsert: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');

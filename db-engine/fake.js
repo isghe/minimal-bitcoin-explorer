@@ -84,6 +84,9 @@ const fake = () => {
 			getRefByHash: hash => {
 				return 0;
 			},
+			getCachedRefByHashIf: async hash => {
+				return db.hex.getRefByHash(hash);
+			},
 			upsert: (hex, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
