@@ -205,7 +205,7 @@ const mongodb = async () => {
 			}
 		},
 		spkType: {
-			upsert: async type => {
+			upsertOld: async type => {
 				const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
@@ -216,6 +216,17 @@ const mongodb = async () => {
 				} else {
 					await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
 				}
+				return {};
+			},
+			upsert: async description => {
+				await clientDb.collection('spk_type').updateOne({description}, {
+					$inc: {
+						counter: 1
+					},
+					$set: {
+						description
+					}
+				}, {upsert: true});
 				return {};
 			},
 			getRef: async description => {
@@ -244,7 +255,7 @@ const mongodb = async () => {
 				}
 				return cache.hex[hash];
 			},
-			upsert: async (hex, hash, spk_type_ref, satoshi) => {
+			upsertOld: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
 				const ret = {};
@@ -264,6 +275,21 @@ const mongodb = async () => {
 				}
 				return ret;
 			},
+			upsert: async (hex, hash, spk_type_ref, satoshi) => {
+				await clientDb.collection('hex').updateOne({hash}, {
+					$inc: {
+						satoshi,
+						counter: 1
+					},
+					$set: {
+						hex,
+						hash,
+						spk_type_ref
+					}
+				}, {upsert: true});
+				return {};
+			},
+
 			update: async (hex_id, satoshi) => {
 				assert(typeof hex_id !== 'undefined');
 				util.assert.isSatoshi(satoshi);
@@ -273,7 +299,7 @@ const mongodb = async () => {
 			}
 		},
 		address: {
-			upsert: async (address, hex_ref, spk_type_ref) => {
+			upsertOld: async (address, hex_ref, spk_type_ref) => {
 				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
 				assert(spkType.length <= 1);
 				if (spkType.length === 0) {
@@ -286,6 +312,19 @@ const mongodb = async () => {
 				} else {
 					await clientDb.collection('address').updateOne({address, hex_ref}, {$set: {counter: spkType[0].counter + 1}});
 				}
+				return {};
+			},
+			upsert: async (address, hex_ref, spk_type_ref) => {
+				await clientDb.collection('address').updateOne({address, hex_ref}, {
+					$inc: {
+						counter: 1
+					},
+					$set: {
+						address,
+						hex_ref,
+						spk_type_ref
+					}
+				}, {upsert: true});
 				return {};
 			}
 		},
