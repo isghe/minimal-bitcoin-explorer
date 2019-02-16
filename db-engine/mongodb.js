@@ -107,8 +107,11 @@ const mongodb = async () => {
 	};
 
 	const controlFlowId = await getControFlawlId();
-	const spkTypeCache = {};
-	const hexCache = {};
+
+	const cache = {
+		spkType: {},
+		hex: {}
+	};
 	const db = {
 		controlFlow: {
 			stoppedSuccesfully: async () => {
@@ -210,11 +213,11 @@ const mongodb = async () => {
 				return ret[0]._id;
 			},
 			getCachedRefIf: async description => {
-				if (typeof spkTypeCache[description] === 'undefined') {
-					spkTypeCache[description] = await db.spkType.getRef(description);
-					console.log(spkTypeCache);
+				if (typeof cache.spkType[description] === 'undefined') {
+					cache.spkType[description] = await db.spkType.getRef(description);
+					console.log(cache.spkType);
 				}
-				return spkTypeCache[description];
+				return cache.spkType[description];
 			}
 		},
 		hex: {
@@ -225,10 +228,10 @@ const mongodb = async () => {
 				return ret[0]._id;
 			},
 			getCachedRefByHashIf: async hash => {
-				if (typeof hexCache[hash] === 'undefined') {
-					hexCache[hash] = await db.hex.getRefByHash(hash);
+				if (typeof cache.hex[hash] === 'undefined') {
+					cache.hex[hash] = await db.hex.getRefByHash(hash);
 				}
-				return hexCache[hash];
+				return cache.hex[hash];
 			},
 			upsert: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
