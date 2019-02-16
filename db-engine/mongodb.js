@@ -110,9 +110,20 @@ const mongodb = async () => {
 
 	const cache = {
 		spkType: {},
-		hex: {}
+		hex: {},
+		info: () => {
+			return {
+				cache: {
+					spkType: cache.spkType,
+					hexLength: util.keys(cache.hex).length
+				}
+			};
+		}
 	};
 	const db = {
+		info: () => {
+			return cache.info();
+		},
 		controlFlow: {
 			stoppedSuccesfully: async () => {
 				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();

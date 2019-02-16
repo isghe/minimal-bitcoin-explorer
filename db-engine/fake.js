@@ -14,7 +14,15 @@ const fake = () => {
 	let fakeUtxoHex = 0;
 	let fakeHexId = 0;
 
+	const cache = {
+		info: () => {
+			return {};
+		}
+	};
 	const db = {
+		info: () => {
+			return cache.info();
+		},
 		controlFlow: {
 			stoppedSuccesfully: () => {
 				return true;

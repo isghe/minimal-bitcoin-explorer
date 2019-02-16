@@ -152,7 +152,7 @@ const main = async () => {
 		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
 		profile['tx/s'] = new DeltaSigma(1000 * profile.tx.delta / profile.profile.delta, 1000 * profile.tx.sigma / profile.profile.sigma);
 
-		console.log(JSON.stringify({profile}));
+		console.log(JSON.stringify({profile, info: explore.db.info()}));
 
 		profile.db.query.delta = 0;
 		profile.rpc.delta = 0;

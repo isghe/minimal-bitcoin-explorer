@@ -16,7 +16,15 @@ const sqlite = () => {
 		}
 	});
 
+	const cache = {
+		info: () => {
+			return {};
+		}
+	};
 	const db = {
+		info: () => {
+			return cache.info();
+		},
 		controlFlow: {
 			stoppedSuccesfully: () => {
 				return true;
