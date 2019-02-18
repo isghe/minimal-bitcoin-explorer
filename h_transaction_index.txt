@@ -1,0 +1,75 @@
+db.h_transaction.createIndex (
+	{
+		txid: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			$and:[
+				{
+					txid:{
+						$lt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+					}
+				},
+				{
+					txid:{
+						$gt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+					}
+				},
+				{
+					txid:{
+						$lt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+					}
+				},
+				{
+					txid:{
+						$gt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+					}
+				}
+			]
+		}
+	}
+);
+
+
+db.h_transaction.createIndex (
+	{
+		txid: -1,
+		block_ref: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			txid:
+				{
+					$in:['d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599', 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468']
+				}
+		}
+	}
+);
+db.h_transaction.createIndex ({txid: -1, block_ref: -1}, {unique: true});
+, options: {unique: true}}
+
+db.hex.find({hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'})
+
+
+db.address.createIndex (
+	{
+		hex_ref: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			$and:[{
+					spk_type_ref:{
+						$lt: ObjectId("5c6239318cb3150f4322d5c2")
+					}
+				},
+				{
+					spk_type_ref:{
+						$gt: ObjectId("5c6239318cb3150f4322d5c2")
+					}
+			}]
+		}
+	}
+);

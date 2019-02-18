@@ -4,7 +4,7 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-const util = require('../lib/util.js');
+const util = require('../../lib/util.js');
 
 const sqlite = () => {
 	// const configuration = require('../configuration');

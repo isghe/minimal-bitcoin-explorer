@@ -4,10 +4,10 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-const util = require('../lib/util.js');
+const util = require('../../lib/util.js');
 
 const fake = () => {
-	const configuration = require('../configuration');
+	const configuration = require('../../configuration');
 	let fakeBlockIndex = 0;
 	let fakeTransactionIndex = 0;
 	let fakeUtxo = 0;
@@ -42,15 +42,15 @@ const fake = () => {
 				const ret = {
 					ts_counter: 0
 				};
-				if (typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined') {
+				if (typeof (configuration.dbEngine.explore.fake.nextblockhash) !== 'undefined') {
 					ret.ts_counter = 1;
 				}
 				return ret;
 			},
 			selectLast: () => {
-				assert(typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined');
+				assert(typeof (configuration.dbEngine.explore.fake.nextblockhash) !== 'undefined');
 				return {
-					nextblockhash: configuration.dbEngine.fake.nextblockhash
+					nextblockhash: configuration.dbEngine.explore.fake.nextblockhash
 				};
 			},
 			/* eslint-disable no-unused-vars */

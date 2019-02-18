@@ -99,7 +99,7 @@ const handleTransaction = async (raw, block_ref) => {
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
-	explore.db = await require('./db-engine/' + configuration.dbEngine.name);
+	explore.db = await require('./db-engine/explore/' + configuration.dbEngine.explore.name);
 	console.log('Current db-engine: ' + configuration.dbEngine.name);
 	const stoppedSuccesfully = await explore.db.controlFlow.stoppedSuccesfully();
 	assert(stoppedSuccesfully === true);

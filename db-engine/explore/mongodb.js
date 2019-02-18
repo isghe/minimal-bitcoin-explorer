@@ -4,14 +4,14 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-const util = require('../lib/util.js');
+const util = require('../../lib/util.js');
 
 const mongodb = async () => {
-	const configuration = require('../configuration');
+	const configuration = require('../../configuration');
 	const {MongoClient} = require('mongodb');
 
-	const url = configuration.dbEngine.mongo.url; // eslint-disable-line prefer-destructuring
-	const dbName = configuration.dbEngine.mongo.dbName; // eslint-disable-line prefer-destructuring
+	const url = configuration.dbEngine.explore.mongo.url; // eslint-disable-line prefer-destructuring
+	const dbName = configuration.dbEngine.explore.mongo.dbName; // eslint-disable-line prefer-destructuring
 
 	const client = await MongoClient.connect(url, {useNewUrlParser: true});
 	console.log('Connected successfully to server');
@@ -121,6 +121,9 @@ const mongodb = async () => {
 		}
 	};
 	const db = {
+		init: () => {
+		},
+
 		info: () => {
 			return cache.info();
 		},
