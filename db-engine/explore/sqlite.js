@@ -7,55 +7,11 @@ const assert = require('assert');
 const util = require('../../lib/util.js');
 
 const sqlite = () => {
-	// const configuration = require('../configuration');
-	const BetterSqlite3 = require('better-sqlite3');
-	const client = new BetterSqlite3('explore.sqlite', {
-		verboseNo: query => {
-			assert(typeof query !== 'undefined');
-			console.log(JSON.stringify({query}));
-		}
-	});
-
-	const cache = {
-		info: () => {
-			return {};
-		}
-	};
+	const configuration = require('../../configuration');
+	const dbCommon = require('../common/sqlite');
+	const client = dbCommon.client(configuration.dbEngine.explore.sqlite);
 	const db = {
-		info: () => {
-			return cache.info();
-		},
-		controlFlow: {
-			stoppedSuccesfully: () => {
-				return true;
-			},
-			hasToStop: () => {
-				return false;
-			},
-			setStopSuccesfully: () => {
-			}
-		},
-		beginTransaction: () => {
-			client.prepare('begin transaction')
-				.run();
-		},
-		commit: () => {
-			client.prepare('commit')
-				.run();
-		},
 		block: {
-			selectCount: () => {
-				const ret = client.prepare('select count (*) as ts_counter from block')
-					.get();
-				assert(typeof ret !== 'undefined');
-				return ret;
-			},
-			selectLast: () => {
-				const ret = client.prepare('select height, hash, nextblockhash from block where height = (select max (height) from block)')
-					.get();
-				assert(typeof ret !== 'undefined');
-				return ret;
-			},
 			insert: block => {
 				const info = client.prepare('insert into block(height, hash, nextblockhash) values (?, ?, ?)')
 					.run(block.height, block.hash, block.nextblockhash);
@@ -153,7 +109,8 @@ const sqlite = () => {
 			}
 		}
 	};
-	return db;
+	db.block = Object.assign({}, dbCommon.block, db.block);
+	return Object.assign({}, dbCommon, db);
 };
 
 module.exports = sqlite();

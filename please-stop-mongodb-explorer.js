@@ -2,8 +2,8 @@
 'use strict';
 
 const main = async () => {
-	// const db = await require('./db-engine/explore/mongodb.js');
-	const db = await require('./db-engine/download-all/mongodb.js');
+	const configuration = require('./configuration');
+	const db = await require('./db-engine/' + configuration.application + '/mongodb.js');
 	db.controlFlow.pleaseStop()
 		.then(() => {
 			console.log('Stopped succesfully');

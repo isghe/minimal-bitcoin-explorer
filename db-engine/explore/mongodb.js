@@ -8,14 +8,8 @@ const util = require('../../lib/util.js');
 
 const mongodb = async () => {
 	const configuration = require('../../configuration');
-	const {MongoClient} = require('mongodb');
-
-	const url = configuration.dbEngine.explore.mongo.url; // eslint-disable-line prefer-destructuring
-	const dbName = configuration.dbEngine.explore.mongo.dbName; // eslint-disable-line prefer-destructuring
-
-	const client = await MongoClient.connect(url, {useNewUrlParser: true});
-	console.log('Connected successfully to server');
-	const clientDb = client.db(dbName);
+	const dbCommon = await require('../common/mongodb');
+	const clientDb = await dbCommon.client(configuration.dbEngine.explore.mongo);
 
 	const createIndexes = (table, indexes) => {
 		indexes.forEach(async index => {
@@ -121,8 +115,6 @@ const mongodb = async () => {
 		}
 	};
 	const db = {
-		init: () => {
-		},
 
 		info: () => {
 			return cache.info();
