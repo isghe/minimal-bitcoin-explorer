@@ -1,9 +1,13 @@
+/* eslint-disable capitalized-comments */
 'use strict';
 
 const main = async () => {
-	const db = await require('./db-engine/mongodb.js');
-	await db.controlFlow.pleaseStop();
-	console.log('Stopped succesfully');
+	const configuration = require('./configuration');
+	const db = await require('./db-engine/' + configuration.application + '/mongodb.js');
+	db.controlFlow.pleaseStop()
+		.then(() => {
+			console.log('Stopped succesfully');
+		});
 };
 
 main();

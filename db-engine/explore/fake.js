@@ -4,62 +4,17 @@
 /* eslint-disable no-await-in-loop */
 
 const assert = require('assert');
-const util = require('../lib/util.js');
+const util = require('../../lib/util.js');
 
 const fake = () => {
-	const configuration = require('../configuration');
-	let fakeBlockIndex = 0;
 	let fakeTransactionIndex = 0;
 	let fakeUtxo = 0;
 	let fakeUtxoHex = 0;
 	let fakeHexId = 0;
 
-	const cache = {
-		info: () => {
-			return {};
-		}
-	};
+	const dbCommon = require('../common/fake');
 	const db = {
-		info: () => {
-			return cache.info();
-		},
-		controlFlow: {
-			stoppedSuccesfully: () => {
-				return true;
-			},
-			hasToStop: () => {
-				return false;
-			},
-			setStopSuccesfully: () => {
-			}
-		},
-		beginTransaction: () => {
-		},
-		commit: () => {
-		},
-		block: {
-			selectCount: () => {
-				const ret = {
-					ts_counter: 0
-				};
-				if (typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined') {
-					ret.ts_counter = 1;
-				}
-				return ret;
-			},
-			selectLast: () => {
-				assert(typeof (configuration.dbEngine.fake.nextblockhash) !== 'undefined');
-				return {
-					nextblockhash: configuration.dbEngine.fake.nextblockhash
-				};
-			},
-			/* eslint-disable no-unused-vars */
-			insert: block => {
-				return {
-					lastInsertRowid: ++fakeBlockIndex
-				};
-			}
-		},
+		/* eslint-disable no-unused-vars */
 		transaction: {
 			insert: (txid, block_ref) => {
 				return {
@@ -130,7 +85,7 @@ const fake = () => {
 		}
 		/* eslint-enable no-unused-vars */
 	};
-	return db;
+	return Object.assign({}, dbCommon, db);
 };
 
 module.exports = fake();
