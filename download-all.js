@@ -44,7 +44,7 @@ const profile = {
 	'tx/s': null // new DeltaSigma(0, 0)
 };
 
-const mainOld = async () => {
+const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
 	explore.db = await require('./db-engine/download-all/' + configuration.dbEngine.downloadAll.name);
@@ -186,5 +186,5 @@ const mainCanTrash = async () => {
 	console.log('Stopped succesfully');
 };
 
-mainSequential();
+main();
 
