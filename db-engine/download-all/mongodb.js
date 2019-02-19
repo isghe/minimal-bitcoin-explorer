@@ -36,6 +36,9 @@ const mongodb = async () => {
 				return {
 					lastInsertRowid: insertResult.insertedId
 				};
+			},
+			extract: block => {
+				return block.block;
 			}
 		}
 	};

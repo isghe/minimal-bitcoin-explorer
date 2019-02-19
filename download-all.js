@@ -55,12 +55,13 @@ const main = async () => {
 	let lastBlock = {};
 	const count = (await explore.db.block.selectCount()).ts_counter;
 	if (count > 0) {
-		lastBlock = await explore.db.block.selectLast(count);
+		const block = await explore.db.block.selectLast(count);
+		lastBlock = block.block;
 	} else {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
 	}
-	console.log({lastBlock});
+	console.log({height: lastBlock.height, nextblockhash: lastBlock.nextblockhash});
 
 	while (true) { // eslint-disable-line no-constant-condition
 		const hasToStop = await explore.db.controlFlow.hasToStop();
