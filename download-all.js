@@ -56,7 +56,7 @@ const main = async () => {
 	const count = (await explore.db.block.selectCount()).ts_counter;
 	if (count > 0) {
 		const block = await explore.db.block.selectLast(count);
-		lastBlock = block.block;
+		lastBlock = explore.db.block.extract (block);
 	} else {
 		// genesis block.hash
 		lastBlock.nextblockhash = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f';
