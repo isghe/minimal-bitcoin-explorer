@@ -37,8 +37,10 @@ const mongodb = async () => {
 					lastInsertRowid: insertResult.insertedId
 				};
 			},
-			extract: block => {
-				return block.block;
+			selectLast: async count => {
+				const block = await clientDb.collection('block').find({}, {block: 1}).sort({'block.height': -1}).limit(1).toArray();
+				assert(block.length === 1);
+				return block[0].block;
 			}
 		}
 	};

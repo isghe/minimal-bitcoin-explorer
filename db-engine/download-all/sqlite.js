@@ -17,9 +17,6 @@ const sqlite = () => {
 					.run(block.height, block.hash, block.nextblockhash);
 				assert(info.changes === 1);
 				return info;
-			},
-			extract: block => {
-				return block;
 			}
 		}
 	};

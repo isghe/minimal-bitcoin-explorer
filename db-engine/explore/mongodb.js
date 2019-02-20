@@ -146,11 +146,6 @@ const mongodb = async () => {
 		commit: () => {
 		},
 		block: {
-			selectCount: async () => {
-				const ts_counter = await clientDb.collection('block').countDocuments();
-				assert(typeof ts_counter !== 'undefined');
-				return {ts_counter};
-			},
 			selectLast: async count => {
 				const block = await clientDb.collection('block').find().skip(count - 1).toArray();
 				assert(block.length === 1);
