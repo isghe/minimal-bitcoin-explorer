@@ -1,0 +1,6 @@
+on local:
+`mongod --dbpath mongodb`
+
+on server:
+
+`numactl --interleave=all mongod --dbpath mongodb --fork --logpath mongodb-hash.log`
