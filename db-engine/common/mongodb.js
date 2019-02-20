@@ -74,7 +74,7 @@ const mongodb = async () => {
 		},
 		block: {
 			selectCount: async () => {
-				const ts_counter = await clientDb.collection('block').countDocuments();
+				const ts_counter = await clientDb.collection('block').find().count();
 				assert(typeof ts_counter !== 'undefined');
 				return {ts_counter};
 			}
