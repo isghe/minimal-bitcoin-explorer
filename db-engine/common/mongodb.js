@@ -77,6 +77,10 @@ const mongodb = async () => {
 				const ts_counter = await clientDb.collection('block').find().count();
 				assert(typeof ts_counter !== 'undefined');
 				return {ts_counter};
+			},
+			findOne: async filter =>{
+				const block = await clientDb.collection('block').findOne(filter, {block: 1});
+				return block;
 			}
 		}
 	};
