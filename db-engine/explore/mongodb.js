@@ -8,8 +8,9 @@ const util = require('../../lib/util.js');
 
 const mongodb = async () => {
 	const configuration = require('../../configuration');
-	const dbCommon = await require('../common/mongodb');
-	const clientDb = await dbCommon.client(configuration.dbEngine.explore.mongo);
+	const Mongo = await require('../common/mongodb');
+	const mongo = new Mongo();
+	const clientDb = await mongo.init(configuration.dbEngine.explore.mongo);
 
 	const createIndexes = (table, indexes) => {
 		indexes.forEach(async index => {
@@ -380,6 +381,8 @@ const mongodb = async () => {
 			}
 		}
 	};
+	db.block = Object.assign({}, mongo.block, db.block);
+	return Object.assign({}, mongo, db);
 	return db;
 };
 

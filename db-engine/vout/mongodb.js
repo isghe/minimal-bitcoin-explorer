@@ -6,11 +6,11 @@
 const assert = require('assert');
 const util = require('../../lib/util.js');
 
-const mongodb = async () => {
+const mongodbVout = async () => {
 	const configuration = require('../../configuration');
 	const Mongo = require('../common/mongodb');
 	const mongo = new Mongo();
-	const clientDb = await mongo.init(configuration.dbEngine.downloadAll.mongo);
+	const clientDb = await mongo.init(configuration.dbEngine.vout.mongo);
 
 	const createIndexes = (table, indexes) => {
 		indexes.forEach(async index => {
@@ -20,18 +20,20 @@ const mongodb = async () => {
 	};
 
 	const blockIndexes = [
-		{index: {'block.height': -1}, options: {unique: true}},
-		{index: {'block.hash': -1}, options: {unique: true}},
-		{index: {'block.nextblockhash': -1}, options: {unique: true}}
+		{index: {height: -1}, options: {unique: true}},
+		{index: {hash: -1}, options: {unique: true}},
+		{index: {nextblockhash: -1}, options: {unique: true}}
 	];
 	await createIndexes('block', blockIndexes);
 
 	const db = {
 		block: {
 			insert: async block => {
-				assert(typeof (block) !== 'undefined');
+				// height, hash, nextblockhash
 				const insertResult = await clientDb.collection('block').insertOne({
-					block
+					height: block.height,
+					hash: block.hash,
+					nextblockhash: block.nextblockhash
 				});
 
 				return {
@@ -39,7 +41,7 @@ const mongodb = async () => {
 				};
 			},
 			selectLast: async count => {
-				const block = await clientDb.collection('block').find({}, {block: 1}).sort({'block.height': -1}).limit(1).toArray();
+				const block = await clientDb.collection('block').find({}, {block: 1}).sort({height: -1}).limit(1).toArray();
 				assert(block.length === 1);
 				return block[0].block;
 			}
@@ -49,4 +51,4 @@ const mongodb = async () => {
 	return Object.assign({}, mongo, db);
 };
 
-module.exports = mongodb();
+module.exports = mongodbVout();

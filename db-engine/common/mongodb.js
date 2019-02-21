@@ -6,85 +6,84 @@
 const assert = require('assert');
 const util = require('../../lib/util.js');
 
-const mongodb = async () => {
-	let controlFlowId = null;
-	const cache = {
+function Mongodb() {
+	const self = this;
+	self.controlFlowId = null;
+	self.cache = {
 		info: () => {
 			return {};
 		}
 	};
 
-	let clientDb = null;
-	const db = {
-		client: async configuration => {
-			assert(clientDb === null);
-			assert(controlFlowId === null);
-			const {MongoClient} = require('mongodb');
-			const client = await MongoClient.connect(configuration.url, {useNewUrlParser: true});
-			console.log('Connected successfully to server');
-			clientDb = client.db(configuration.dbName);
-			const getControFlawlId = async () => {
-				let ret = null;
-				const controlFlow = await clientDb.collection('controlFlow').find().toArray();
-				if (controlFlow.length === 0) {
-					const insertResult = await clientDb.collection('controlFlow').insertOne({
-						stoppedSuccesfully: true,
-						hasToStop: false
-					});
-					ret = insertResult.insertedId;
-				} else {
-					ret = controlFlow[0]._id;
-				}
-				return ret;
-			};
+	self.clientDb = null;
 
-			controlFlowId = await getControFlawlId();
-
-			return clientDb;
-		},
-
-		info: () => {
-			return cache.info();
-		},
-		controlFlow: {
-			stoppedSuccesfully: async () => {
-				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
-				assert(control.length === 1);
-				await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false}});
-
-				return control[0].stoppedSuccesfully;
-			},
-			hasToStop: async () => {
-				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
-				assert(control.length === 1);
-				return control[0].hasToStop;
-			},
-			setStopSuccesfully: async () => {
-				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: true, hasToStop: false}});
-				return updateResult;
-			},
-			pleaseStop: async () => {
-				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false, hasToStop: true}});
-				return updateResult;
+	self.init = async configuration => {
+		assert(self.clientDb === null);
+		assert(self.controlFlowId === null);
+		const {MongoClient} = require('mongodb');
+		const client = await MongoClient.connect(configuration.url, {useNewUrlParser: true});
+		console.log('Connected successfully to server');
+		self.clientDb = client.db(configuration.dbName);
+		const getControFlawlId = async () => {
+			let ret = null;
+			const controlFlow = await self.clientDb.collection('controlFlow').find().toArray();
+			if (controlFlow.length === 0) {
+				const insertResult = await self.clientDb.collection('controlFlow').insertOne({
+					stoppedSuccesfully: true,
+					hasToStop: false
+				});
+				ret = insertResult.insertedId;
+			} else {
+				ret = controlFlow[0]._id;
 			}
+			return ret;
+		};
+
+		self.controlFlowId = await getControFlawlId();
+
+		return self.clientDb;
+	};
+
+	self.info = () => {
+		return self.cache.info();
+	};
+	self.controlFlow = {
+		stoppedSuccesfully: async () => {
+			const control = await self.clientDb.collection('controlFlow').find({_id: self.controlFlowId}).toArray();
+			assert(control.length === 1);
+			await self.clientDb.collection('controlFlow').updateOne({_id: self.controlFlowId}, {$set: {stoppedSuccesfully: false}});
+
+			return control[0].stoppedSuccesfully;
 		},
-		beginTransaction: () => {
+		hasToStop: async () => {
+			const control = await self.clientDb.collection('controlFlow').find({_id: self.controlFlowId}).toArray();
+			assert(control.length === 1);
+			return control[0].hasToStop;
 		},
-		commit: () => {
+		setStopSuccesfully: async () => {
+			const updateResult = await self.clientDb.collection('controlFlow').updateOne({_id: self.controlFlowId}, {$set: {stoppedSuccesfully: true, hasToStop: false}});
+			return updateResult;
 		},
-		block: {
-			selectCount: async () => {
-				const ts_counter = await clientDb.collection('block').find().count();
-				assert(typeof ts_counter !== 'undefined');
-				return {ts_counter};
-			},
-			findOne: async filter =>{
-				const block = await clientDb.collection('block').findOne(filter, {block: 1});
-				return block;
-			}
+		pleaseStop: async () => {
+			const updateResult = await self.clientDb.collection('controlFlow').updateOne({_id: self.controlFlowId}, {$set: {stoppedSuccesfully: false, hasToStop: true}});
+			return updateResult;
 		}
 	};
-	return db;
-};
+	self.beginTransaction = () => {
+	};
+	self.commit = () => {
+	};
+	self.block = {
+		selectCount: async () => {
+			const ts_counter = await self.clientDb.collection('block').find().count();
+			assert(typeof ts_counter !== 'undefined');
+			return {ts_counter};
+		},
+		findOne: async filter => {
+			const block = await self.clientDb.collection('block').findOne(filter, {block: 1});
+			return block;
+		}
+	};
+}
 
-module.exports = mongodb();
+module.exports = Mongodb;
