@@ -86,23 +86,6 @@ const mongodb = async () => {
 	];
 	await createIndexes('hex', hexIndexes);
 
-	const getControFlawlId = async () => {
-		let ret = null;
-		const controlFlow = await clientDb.collection('controlFlow').find().toArray();
-		if (controlFlow.length === 0) {
-			const insertResult = await clientDb.collection('controlFlow').insertOne({
-				stoppedSuccesfully: true,
-				hasToStop: false
-			});
-			ret = insertResult.insertedId;
-		} else {
-			ret = controlFlow[0]._id;
-		}
-		return ret;
-	};
-
-	const controlFlowId = await getControFlawlId();
-
 	const cache = {
 		spkType: {},
 		hex: {},
@@ -116,31 +99,8 @@ const mongodb = async () => {
 		}
 	};
 	const db = {
-
 		info: () => {
 			return cache.info();
-		},
-		controlFlow: {
-			stoppedSuccesfully: async () => {
-				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
-				assert(control.length === 1);
-				await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false}});
-
-				return control[0].stoppedSuccesfully;
-			},
-			hasToStop: async () => {
-				const control = await clientDb.collection('controlFlow').find({_id: controlFlowId}).toArray();
-				assert(control.length === 1);
-				return control[0].hasToStop;
-			},
-			setStopSuccesfully: async () => {
-				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: true, hasToStop: false}});
-				return updateResult;
-			},
-			pleaseStop: async () => {
-				const updateResult = await clientDb.collection('controlFlow').updateOne({_id: controlFlowId}, {$set: {stoppedSuccesfully: false, hasToStop: true}});
-				return updateResult;
-			}
 		},
 		beginTransaction: () => {
 		},
