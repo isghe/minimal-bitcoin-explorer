@@ -93,7 +93,7 @@ function Mongodb() {
 	};
 	self.spkType = {
 		upsert: async description => {
-			const ret = await self.clientDb.collection('spk_type').updateOne({description}, {
+			const result = await self.clientDb.collection('spk_type').updateOne({description}, {
 				$inc: {
 					counter: 1
 				},
@@ -101,7 +101,12 @@ function Mongodb() {
 					description
 				}
 			}, {upsert: true});
-			return {};
+
+			let ret = null;
+			if (result.upsertedId !== null) {
+				ret = result.upsertedId._id;
+			}
+			return ret;
 		},
 		getRef: async description => {
 			const ret = await self.clientDb.collection('spk_type').find({description}).toArray();

@@ -169,9 +169,9 @@ const mongodb = async () => {
 				}
 				return ret;
 			},
-			*/
+
 			upsert: async (hex, hash, spk_type_ref, satoshi) => {
-				const ret = await clientDb.collection('hex').updateOne({hash}, {
+				const result = await clientDb.collection('hex').updateOne({hash}, {
 					$inc: {
 						satoshi,
 						counter: 1
@@ -182,8 +182,12 @@ const mongodb = async () => {
 						spk_type_ref
 					}
 				}, {upsert: true});
-				assert(typeof ret.upsertedId._id !== 'undefined');
-				return ret.upsertedId._id;
+
+				let ret = null;
+				if (result.upsertedId !== null) {
+					ret = result.upsertedId._id;
+				}
+				return ret;
 			},
 
 			update: async (hex_id, satoshi) => {

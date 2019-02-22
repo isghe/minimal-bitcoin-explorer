@@ -47,8 +47,41 @@ const mongodbVout = async () => {
 			}
 		},
 		hex: {
+			getRefByHash: async hash => {
+				assert(typeof hash !== 'undefined');
+				const ret = await clientDb.collection('hex').find({hash}).toArray();
+				assert(ret.length === 1);
+				return ret[0]._id;
+			},
+			getCachedRefByHashIf: async hash => {
+				if (typeof mongo.cache.hex[hash] === 'undefined') {
+					mongo.cache.hex[hash] = await db.hex.getRefByHash(hash);
+				}
+				return mongo.cache.hex[hash];
+			},
+			upsertOld: async (hex, hash, spk_type_ref, satoshi) => {
+				assert(typeof hex !== 'undefined');
+				util.assert.isSatoshi(satoshi);
+				const ret = {};
+				const spkType = await clientDb.collection('hex').find({hash}).toArray();
+				assert(spkType.length <= 1);
+				if (spkType.length === 0) {
+					const insertResult = await clientDb.collection('hex').insertOne({
+						hex,
+						hash,
+						spk_type_ref,
+						satoshi,
+						counter: 1
+					});
+					ret.lastInsertRowid = insertResult.insertedId;
+				} else {
+					await clientDb.collection('hex').updateOne({hash}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
+				}
+				return ret;
+			},
+
 			upsert: async (hex, hash, spk_type_ref, satoshi) => {
-				const ret = await clientDb.collection('hex').updateOne({hash}, {
+				const result = await clientDb.collection('hex').updateOne({hash}, {
 					$inc: {
 						satoshi,
 						counter: 1
@@ -59,8 +92,12 @@ const mongodbVout = async () => {
 						spk_type_ref
 					}
 				}, {upsert: true});
-				assert(typeof ret.upsertedId._id !== 'undefined');
-				return ret.upsertedId._id;
+
+				let ret = null;
+				if (result.upsertedId._id !== null) {
+					ret = result.upsertedId._id;
+				}
+				return ret;
 			},
 
 			update: async (hex_id, satoshi) => {
