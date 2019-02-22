@@ -26,6 +26,21 @@ const mongodbVout = async () => {
 	];
 	await createIndexes('block', blockIndexes);
 
+	const spkTypeIndexes = [
+		{index: {description: -1}, options: {unique: true}}
+	];
+	await createIndexes('spk_type', spkTypeIndexes);
+
+	const addressIndexes = [
+		{index: {address: -1, hex_ref: -1}, options: {unique: true}}
+	];
+	await createIndexes('address', addressIndexes);
+
+	const hexIndexes = [
+		{index: {hash: -1}, options: {unique: true}}
+	];
+	await createIndexes('hex', hexIndexes);
+
 	const db = {
 		block: {
 			insert: async block => {
