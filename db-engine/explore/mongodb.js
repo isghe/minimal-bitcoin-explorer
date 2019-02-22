@@ -87,13 +87,6 @@ const mongodb = async () => {
 	await createIndexes('hex', hexIndexes);
 
 	const db = {
-		info: () => {
-			return cache.info();
-		},
-		beginTransaction: () => {
-		},
-		commit: () => {
-		},
 		block: {
 			selectLast: async count => {
 				const block = await clientDb.collection('block').find().skip(count - 1).toArray();
