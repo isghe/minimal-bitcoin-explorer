@@ -383,7 +383,6 @@ const mongodb = async () => {
 	};
 	db.block = Object.assign({}, mongo.block, db.block);
 	return Object.assign({}, mongo, db);
-	return db;
 };
 
 module.exports = mongodb();
