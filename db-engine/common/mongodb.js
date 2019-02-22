@@ -10,8 +10,15 @@ function Mongodb() {
 	const self = this;
 	self.controlFlowId = null;
 	self.cache = {
+		spkType: {},
+		hex: {},
 		info: () => {
-			return {};
+			return {
+				cache: {
+					spkType: self.cache.spkType,
+					hexLength: util.keys(self.cache.hex).length
+				}
+			};
 		}
 	};
 
@@ -82,6 +89,31 @@ function Mongodb() {
 		findOne: async filter => {
 			const block = await self.clientDb.collection('block').findOne(filter, {block: 1});
 			return block;
+		}
+	};
+	self.spkType = {
+		upsert: async description => {
+			await self.clientDb.collection('spk_type').updateOne({description}, {
+				$inc: {
+					counter: 1
+				},
+				$set: {
+					description
+				}
+			}, {upsert: true});
+			return {};
+		},
+		getRef: async description => {
+			const ret = await self.clientDb.collection('spk_type').find({description}).toArray();
+			assert(ret.length === 1);
+			return ret[0]._id;
+		},
+		getCachedRefIf: async description => {
+			if (typeof self.cache.spkType[description] === 'undefined') {
+				self.cache.spkType[description] = await self.spkType.getRef(description);
+				console.log(self.cache.spkType);
+			}
+			return self.cache.spkType[description];
 		}
 	};
 }

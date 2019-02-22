@@ -86,18 +86,6 @@ const mongodb = async () => {
 	];
 	await createIndexes('hex', hexIndexes);
 
-	const cache = {
-		spkType: {},
-		hex: {},
-		info: () => {
-			return {
-				cache: {
-					spkType: cache.spkType,
-					hexLength: util.keys(cache.hex).length
-				}
-			};
-		}
-	};
 	const db = {
 		info: () => {
 			return cache.info();
@@ -155,44 +143,6 @@ const mongodb = async () => {
 				return updateResult;
 			}
 		},
-		spkType: {
-			upsertOld: async type => {
-				const spkType = await clientDb.collection('spk_type').find({description: type}).toArray();
-				assert(spkType.length <= 1);
-				if (spkType.length === 0) {
-					await clientDb.collection('spk_type').insertOne({
-						description: type,
-						counter: 1
-					});
-				} else {
-					await clientDb.collection('spk_type').updateOne({description: type}, {$set: {counter: spkType[0].counter + 1}});
-				}
-				return {};
-			},
-			upsert: async description => {
-				await clientDb.collection('spk_type').updateOne({description}, {
-					$inc: {
-						counter: 1
-					},
-					$set: {
-						description
-					}
-				}, {upsert: true});
-				return {};
-			},
-			getRef: async description => {
-				const ret = await clientDb.collection('spk_type').find({description}).toArray();
-				assert(ret.length === 1);
-				return ret[0]._id;
-			},
-			getCachedRefIf: async description => {
-				if (typeof cache.spkType[description] === 'undefined') {
-					cache.spkType[description] = await db.spkType.getRef(description);
-					console.log(cache.spkType);
-				}
-				return cache.spkType[description];
-			}
-		},
 		hex: {
 			getRefByHash: async hash => {
 				assert(typeof hash !== 'undefined');
@@ -201,10 +151,10 @@ const mongodb = async () => {
 				return ret[0]._id;
 			},
 			getCachedRefByHashIf: async hash => {
-				if (typeof cache.hex[hash] === 'undefined') {
-					cache.hex[hash] = await db.hex.getRefByHash(hash);
+				if (typeof mongo.cache.hex[hash] === 'undefined') {
+					mongo.cache.hex[hash] = await db.hex.getRefByHash(hash);
 				}
-				return cache.hex[hash];
+				return mongo.cache.hex[hash];
 			},
 			upsertOld: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
