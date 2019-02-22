@@ -39,7 +39,8 @@ const profile = {
 	rpc: new DeltaSigma(0, 0), // ticks executing RPC call
 	db: {
 		query: new DeltaSigma(0, 0), // ticks executing query on db
-		commit: new DeltaSigma(0, 0) // ticks executing commit on db
+		commit: new DeltaSigma(0, 0), // ticks executing commit on db
+		vout: new DeltaSigma(0, 0) // ticks executing commit on vout
 	},
 	tx: new DeltaSigma(0, 0), // number of transactions
 	profile: new DeltaSigma(0, 0),
@@ -47,6 +48,54 @@ const profile = {
 	'tx/s': null // new DeltaSigma(0, 0)
 };
 
+const handleTransaction = async (raw, block_ref) => {
+	assert(typeof raw !== 'undefined');
+	assert(typeof block_ref !== 'undefined');
+
+	const voutCrono = new Crono();
+	for (let i = 0; i < raw.vout.length; ++i) {
+	// await raw.vout.forEach(async vout => {
+		const vout = raw.vout[i];
+		assert(typeof vout !== 'undefined');
+		await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
+		const utxo = await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value);
+		const utxo_ref = utxo.lastInsertRowid;
+
+		const spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
+		const hash = util.sha256(vout.scriptPubKey.hex);
+
+		const hex_ref = await explore.db.vout.hex.upsert(vout.scriptPubKey.hex, hash, spk_type_ref, util.bitcoinToSatoshi(vout.value));
+		if (util.sha256(vout.scriptPubKey.hex) === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
+			console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
+		}
+
+		await explore.db.vout.utxoHex.insert(utxo_ref, hex_ref);
+		if (vout.scriptPubKey.addresses) {
+			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
+				await explore.db.vout.address.upsert(vout.scriptPubKey.addresses[j], hex_ref, spk_type_ref);
+			}
+		}
+	}
+	// });
+
+	profile.db.vout.increment(voutCrono.delta());
+	/*
+	const vinCrono = new Crono();
+	for (let z = 0; z < raw.vin.length; ++z) {
+		const vin = raw.vin[z];
+		if (!vin.coinbase) {
+			// txid, vout -> value, satoshi, hex_id, utxo_id
+			const voutFound = await explore.db.vout.select(vin.txid, vin.vout);
+			assert(typeof voutFound !== 'undefined');
+			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
+			assert(satoshi >= 0);
+			await explore.db.hex.update(voutFound.hex_id, satoshi);
+			await explore.db.utxo.updateSpent(voutFound.id);
+		}
+	}
+	profile.db.vin.increment(vinCrono.delta());
+	*/
+};
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
@@ -88,6 +137,10 @@ const main = async () => {
 			const insertBlockResult = await explore.db.vout.block.insert(lastBlock);
 			assert(typeof insertBlockResult.lastInsertRowid !== 'undefined');
 			profile.tx.increment(lastBlock.tx.length);
+			for (let z = 0; z < lastBlock.tx.length; ++z) {
+				await handleTransaction(lastBlock.tx[z], insertBlockResult.lastInsertRowid);
+			}
+
 			profile.db.query.increment(dbCrono.delta());
 		}
 		const commitCrono = new Crono();

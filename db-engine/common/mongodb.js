@@ -93,7 +93,7 @@ function Mongodb() {
 	};
 	self.spkType = {
 		upsert: async description => {
-			await self.clientDb.collection('spk_type').updateOne({description}, {
+			const ret = await self.clientDb.collection('spk_type').updateOne({description}, {
 				$inc: {
 					counter: 1
 				},

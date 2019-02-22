@@ -45,6 +45,61 @@ const mongodbVout = async () => {
 				assert(block.length === 1);
 				return block[0];
 			}
+		},
+		hex: {
+			upsert: async (hex, hash, spk_type_ref, satoshi) => {
+				const ret = await clientDb.collection('hex').updateOne({hash}, {
+					$inc: {
+						satoshi,
+						counter: 1
+					},
+					$set: {
+						hex,
+						hash,
+						spk_type_ref
+					}
+				}, {upsert: true});
+				assert(typeof ret.upsertedId._id !== 'undefined');
+				return ret.upsertedId._id;
+			},
+
+			update: async (hex_id, satoshi) => {
+				assert(typeof hex_id !== 'undefined');
+				util.assert.isSatoshi(satoshi);
+				const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
+
+				return updateResult;
+			}
+		},
+		utxo: {
+			insert: async (txid, vout, value) => {
+				const insertResult = await clientDb.collection('utxo').insertOne({
+					txid,
+					vout,
+					value,
+					spent: false
+				});
+
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			},
+			updateSpent: async id => {
+				const updateResult = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
+				return updateResult;
+			}
+		},
+		utxoHex: {
+			insert: async (utxo_ref, hex_ref) => {
+				const insertResult = await clientDb.collection('utxo_hex').insertOne({
+					utxo_ref,
+					hex_ref
+				});
+
+				return {
+					lastInsertRowid: insertResult.insertedId
+				};
+			}
 		}
 	};
 	db.block = Object.assign({}, mongo.block, db.block);
