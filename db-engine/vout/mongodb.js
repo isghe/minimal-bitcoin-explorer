@@ -43,7 +43,7 @@ const mongodbVout = async () => {
 			selectLast: async count => {
 				const block = await clientDb.collection('block').find({}, {block: 1}).sort({height: -1}).limit(1).toArray();
 				assert(block.length === 1);
-				return block[0].block;
+				return block[0];
 			}
 		}
 	};
