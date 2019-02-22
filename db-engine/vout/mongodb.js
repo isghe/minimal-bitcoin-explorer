@@ -94,7 +94,7 @@ const mongodbVout = async () => {
 				}, {upsert: true});
 
 				let ret = null;
-				if (result.upsertedId._id !== null) {
+				if (result.upsertedId !== null) {
 					ret = result.upsertedId._id;
 				}
 				return ret;
@@ -106,6 +106,36 @@ const mongodbVout = async () => {
 				const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
 
 				return updateResult;
+			}
+		},
+		address: {
+			upsertOld: async (address, hex_ref, spk_type_ref) => {
+				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
+				assert(spkType.length <= 1);
+				if (spkType.length === 0) {
+					await clientDb.collection('address').insertOne({
+						address,
+						hex_ref,
+						spk_type_ref,
+						counter: 1
+					});
+				} else {
+					await clientDb.collection('address').updateOne({address, hex_ref}, {$set: {counter: spkType[0].counter + 1}});
+				}
+				return {};
+			},
+			upsert: async (address, hex_ref, spk_type_ref) => {
+				await clientDb.collection('address').updateOne({address, hex_ref}, {
+					$inc: {
+						counter: 1
+					},
+					$set: {
+						address,
+						hex_ref,
+						spk_type_ref
+					}
+				}, {upsert: true});
+				return {};
 			}
 		},
 		utxo: {
