@@ -41,6 +41,17 @@ const mongodbVout = async () => {
 	];
 	await createIndexes('hex', hexIndexes);
 
+	const utxoIndexes = [
+		{index: {txid: -1, vout: -1}}
+	];
+	await createIndexes('utxo', utxoIndexes);
+
+	const utxoHexIndexes = [
+		{index: {utxo_ref: -1}, options: {unique: true}},
+		{index: {hex_ref: -1}}
+	];
+	await createIndexes('utxo_hex', utxoHexIndexes);
+
 	const db = {
 		block: {
 			insert: async block => {
