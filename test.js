@@ -15,6 +15,21 @@ const testUtil = () => {
 
 	ret.typeofUndefined = typeof undefined;
 	ret.testSha256 = util.sha256('ciao') === 'b133a0c0e9bee3be20163d2ad31d6248db292aa6dcb1ee087a2aa50e0fc75ae2';
+
+	const crono = new util.Crono();
+	const limit = 1000000;
+	let hash = '0';
+	for (let i = 0; i < limit; ++i) {
+		hash = util.sha256(hash);
+	}
+	const delta = crono.delta();
+	const speedSha256 = {
+		sha256: hash,
+		delta,
+		limit,
+		'sha256/s': limit / delta * 1000
+	};
+	ret.speedSha256 = speedSha256;
 	return ret;
 };
 
