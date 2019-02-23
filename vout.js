@@ -14,13 +14,6 @@ const explore = {
 	}
 };
 
-function Crono() {
-	this.fStart = new Date();
-	this.delta = () => {
-		return new Date() - this.fStart;
-	};
-}
-
 function DeltaSigma(delta, sigma) {
 	this.delta = delta;
 	this.sigma = sigma;
@@ -53,7 +46,7 @@ const handleTransaction = async (raw, block_ref) => {
 	assert(typeof raw !== 'undefined');
 	assert(typeof block_ref !== 'undefined');
 
-	const voutCrono = new Crono();
+	const voutCrono = new util.Crono();
 	for (let i = 0; i < raw.vout.length; ++i) {
 	// await raw.vout.forEach(async vout => {
 		const vout = raw.vout[i];
@@ -85,7 +78,7 @@ const handleTransaction = async (raw, block_ref) => {
 
 	profile.db.vout.update(voutCrono.delta());
 
-	const vinCrono = new Crono();
+	const vinCrono = new util.Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
@@ -125,10 +118,10 @@ const main = async () => {
 		if (hasToStop === true) {
 			break;
 		}
-		const profileCrono = new Crono();
+		const profileCrono = new util.Crono();
 		explore.db.vout.beginTransaction();
 		for (let i = 0; i < 1; ++i) {
-			const rpcCrono = new Crono();
+			const rpcCrono = new util.Crono();
 			assert(typeof lastBlock.nextblockhash !== 'undefined');
 			const lastBlockWrapper = await explore.db.downloadAll.block.findOne({'block.hash': lastBlock.nextblockhash});
 			if (!lastBlockWrapper) {
@@ -141,7 +134,7 @@ const main = async () => {
 
 			profile.height = lastBlock.height;
 
-			const dbCrono = new Crono();
+			const dbCrono = new util.Crono();
 			const insertBlockResult = await explore.db.vout.block.insert(lastBlock);
 			assert(typeof insertBlockResult.lastInsertRowid !== 'undefined');
 			profile.tx.increment(lastBlock.tx.length);
@@ -151,7 +144,7 @@ const main = async () => {
 
 			profile.db.query.increment(dbCrono.delta());
 		}
-		const commitCrono = new Crono();
+		const commitCrono = new util.Crono();
 		explore.db.vout.commit();
 
 		profile.db.commit.update(commitCrono.delta());

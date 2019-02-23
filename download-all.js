@@ -11,13 +11,6 @@ const explore = {
 	db: null
 };
 
-function Crono() {
-	this.fStart = new Date();
-	this.delta = () => {
-		return new Date() - this.fStart;
-	};
-}
-
 function DeltaSigma(delta, sigma) {
 	this.delta = delta;
 	this.sigma = sigma;
@@ -67,10 +60,10 @@ const main = async () => {
 		if (hasToStop === true) {
 			break;
 		}
-		const profileCrono = new Crono();
+		const profileCrono = new util.Crono();
 		explore.db.beginTransaction();
 		for (let i = 0; i < 1; ++i) {
-			const rpcCrono = new Crono();
+			const rpcCrono = new util.Crono();
 			assert(typeof lastBlock.nextblockhash !== 'undefined');
 			lastBlock = await explore.bc.getBlock(lastBlock.nextblockhash, 2);
 			profile.rpc.increment(rpcCrono.delta());
@@ -78,13 +71,13 @@ const main = async () => {
 
 			profile.height = lastBlock.height;
 
-			const dbCrono = new Crono();
+			const dbCrono = new util.Crono();
 			const insertBlockResult = await explore.db.block.insert(lastBlock);
 			assert(typeof insertBlockResult.lastInsertRowid !== 'undefined');
 			profile.tx.increment(lastBlock.tx.length);
 			profile.db.query.increment(dbCrono.delta());
 		}
-		const commitCrono = new Crono();
+		const commitCrono = new util.Crono();
 		explore.db.commit();
 
 		profile.db.commit.update(commitCrono.delta());
@@ -105,7 +98,7 @@ const main = async () => {
 
 const handleBlock = blockhash => {
 	assert(typeof blockhash !== 'undefined');
-	const profileCrono = new Crono();
+	const profileCrono = new util.Crono();
 	explore.bc.getBlock(blockhash, 2)
 		.then(block => {
 			assert(typeof block !== 'undefined');
@@ -145,7 +138,7 @@ const mainSequential = async () => {
 };
 
 const handleBlockHeight = height => {
-	const profileCrono = new Crono();
+	const profileCrono = new util.Crono();
 	explore.bc.getBlockHash(height)
 		.then(hash => {
 			explore.bc.getBlock(hash, 2)
