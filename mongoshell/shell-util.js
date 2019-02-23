@@ -32,3 +32,5 @@ const insertSpkTypeRef = () => {
 		db.address.updateOne({_id: address._id}, {$set: {spk_type_ref: spkTypeRef}});
 	});
 };
+
+db.controlFlow.update({}, {stoppedSuccesfully: true, hasToStop: false});

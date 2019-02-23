@@ -1,0 +1,178 @@
+db.h_transaction.createIndex (
+	{
+		txid: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			$and:[
+				{
+					txid:{
+						$lt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+					}
+				},
+				{
+					txid:{
+						$gt: 'd5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599'
+					}
+				},
+				{
+					txid:{
+						$lt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+					}
+				},
+				{
+					txid:{
+						$gt: 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468'
+					}
+				}
+			]
+		}
+	}
+);
+
+
+db.h_transaction.createIndex (
+	{
+		txid: -1,
+		block_ref: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			txid:
+				{
+					$in:['d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599', 'e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468']
+				}
+		}
+	}
+);
+db.h_transaction.createIndex ({txid: -1, block_ref: -1}, {unique: true});
+, options: {unique: true}}
+
+db.hex.find({hash:'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'})
+
+
+db.address.createIndex (
+	{
+		hex_ref: -1
+	},
+	{
+		unique: true,
+		partialFilterExpression:{
+			$and:[{
+					spk_type_ref:{
+						$lt: ObjectId("5c6239318cb3150f4322d5c2")
+					}
+				},
+				{
+					spk_type_ref:{
+						$gt: ObjectId("5c6239318cb3150f4322d5c2")
+					}
+			}]
+		}
+	}
+);
+{index: , options: {unique: true}}
+db.hex.createIndex({hash: -1}, {unique: true});
+		{index: {address: -1, hex_ref: -1}, options: {unique: true}}
+db.address.createIndex ({address: -1, hex_ref: -1}, {unique: true});
+db.spk_type.createIndex ({description: -1}, {unique: true});
+
+
+db.utxo.aggregate(
+					{$match: {txid:'d3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', vout:0}},
+					{$lookup: {from: 'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo'}},
+					{$unwind: '$utxo'},
+					{$match: {'utxo.vout': vout, 'utxo.spent': false}},
+					{$lookup: {from: 'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
+					{$unwind: '$utxo_hex'},
+					{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
+					{$project: {'utxo._id': 1, 'utxo.value': 1, 'hex._id': 1, 'hex.satoshi': 1, 'utxo.vout': 1}}
+					)
+					.toArray();
+
+db.utxo.aggregate({$match: {txid:'d3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', vout:0}},
+{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
+{$unwind: '$utxo_hex'},
+{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
+{$project: {'_id': 1, 'value': 1, 'hex._id': 1, 'hex.satoshi': 1, 'utxo.vout': 1}}
+).toArray();
+
+db.block.createIndex (
+ {
+  'block.tx.txid': -1,
+  'block.tx.vout.n': -1,
+ },
+ {unique: true}
+);
+
+db.block.aggregate([
+    // Get just the docs that contain a shapes element where color is 'red'
+    {$match: {'block.tx.txid': 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', 'block.tx.vout.n': 0}},
+    {$project: {
+        'block.tx': {$filter: {
+            input: '$block.tx',
+            as: 'tx',
+            cond: {$eq: ['$$tx.txid', 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11']}
+        }},
+        _id:1
+    }},
+]).pretty();
+
+
+db.block.aggregate([
+    // Get just the docs that contain a shapes element where color is 'red'
+    {$match: {'block.tx.txid': 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', 'block.tx.vout.n': 0}},
+    {$project: {
+        'block.tx': {$filter: {
+            input: '$block.tx',
+            as: 'tx',
+            cond: {$eq: ['$$tx.txid', 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11']}
+        }},
+        _id:1
+    }},
+     {$project: {
+        'block.tx.vout': {$filter: {
+            input: '$block.tx.vout',
+            as: 'vout',
+            cond: {$eq: ['$$vout.n', 0]}
+        }},
+        _id:1
+    }}
+]).pretty();
+
+db.block.aggregate([
+    // Get just the docs that contain a shapes element where color is 'red'
+    {$match: {'block.tx.txid': 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', 'block.tx.vout.n': 0}},
+    {$project: {
+        'block.tx': {$filter: {
+            input: '$block.tx',
+            as: 'tx',
+            cond: {$eq: ['$$tx.txid', 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11']}
+        }},
+        _id:1
+    }}
+]).pretty();
+
+db.block.aggregate([
+    // Get just the docs that contain a shapes element where color is 'red'
+    {$match: {'block.tx.txid': 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', 'block.tx.vout.n': 0}}
+]).pretty();
+
+
+,
+     {$project: {
+        'block.tx.vout': {$filter: {
+            input: '$block.tx.vout',
+            as: 'vout',
+            cond: {$eq: ['$$vout.n', 0]}
+        }},
+        _id:0
+    }}
+,
+        'block.tx.vout': {$filter: {
+            input: '$block.tx.vout',
+            as: 'vout',
+            cond: {$eq: ['$$vout.n', 0]}
+        }},
