@@ -13,32 +13,19 @@ const explore = {
 	}
 };
 
-function DeltaSigma(delta, sigma) {
-	this.delta = delta;
-	this.sigma = sigma;
-	this.update = delta => {
-		this.delta = delta;
-		this.sigma += delta;
-	};
-	this.increment = delta => {
-		this.delta += delta;
-		this.sigma += delta;
-	};
-}
-
 const profile = {
 	height: 0,
-	rpc: new DeltaSigma(0, 0), // ticks executing RPC call
+	rpc: new util.DeltaSigma(0, 0), // ticks executing RPC call
 	db: {
-		query: new DeltaSigma(0, 0), // ticks executing query on db
-		commit: new DeltaSigma(0, 0), // ticks executing commit on db
-		vout: new DeltaSigma(0, 0), // ticks executing commit on vout
-		vin: new DeltaSigma(0, 0) // ticks executing commit on vin
+		query: new util.DeltaSigma(0, 0), // ticks executing query on db
+		commit: new util.DeltaSigma(0, 0), // ticks executing commit on db
+		vout: new util.DeltaSigma(0, 0), // ticks executing commit on vout
+		vin: new util.DeltaSigma(0, 0) // ticks executing commit on vin
 	},
-	tx: new DeltaSigma(0, 0), // number of transactions
-	profile: new DeltaSigma(0, 0),
+	tx: new util.DeltaSigma(0, 0), // number of transactions
+	profile: new util.DeltaSigma(0, 0),
 	change: 0,
-	'tx/s': null // new DeltaSigma(0, 0)
+	'tx/s': null // new util.DeltaSigma(0, 0)
 };
 
 const handleTransaction = async (raw, block_ref) => {
@@ -148,7 +135,7 @@ const main = async () => {
 		profile.profile.update(profileCrono.delta());
 
 		profile.change = profile.profile.sigma - (profile.rpc.sigma + profile.db.query.sigma + profile.db.commit.sigma);
-		profile['tx/s'] = new DeltaSigma(1000 * profile.tx.delta / profile.profile.delta, 1000 * profile.tx.sigma / profile.profile.sigma);
+		profile['tx/s'] = new util.DeltaSigma(1000 * profile.tx.delta / profile.profile.delta, 1000 * profile.tx.sigma / profile.profile.sigma);
 
 		console.log(JSON.stringify({profile, info: explore.db.vout.info()}));
 
