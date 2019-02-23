@@ -6,7 +6,7 @@ const main = async () => {
 	const db = await require('./db-engine/' + configuration.application + '/mongodb.js');
 	db.controlFlow.pleaseStop()
 		.then(result => {
-			console.log({result, message: 'Stopped succesfully'});
+			console.log({result: result.result, message: 'Stopped succesfully'});
 		});
 };
 
