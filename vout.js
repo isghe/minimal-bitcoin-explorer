@@ -59,8 +59,7 @@ const handleTransaction = async (raw, block_ref) => {
 		const vout = raw.vout[i];
 		assert(typeof vout !== 'undefined');
 		let spk_type_ref = await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
-		const utxo = await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value);
-		const utxo_ref = utxo.lastInsertRowid;
+		await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value);
 
 		if (spk_type_ref === null) {
 			spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
@@ -76,7 +75,6 @@ const handleTransaction = async (raw, block_ref) => {
 			hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
 		}
 
-		await explore.db.vout.utxoHex.insert(utxo_ref, hex_ref);
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
 				await explore.db.vout.address.upsert(vout.scriptPubKey.addresses[j], hex_ref, spk_type_ref);
@@ -85,23 +83,23 @@ const handleTransaction = async (raw, block_ref) => {
 	}
 	// });
 
-	profile.db.vout.increment(voutCrono.delta());
+	profile.db.vout.update(voutCrono.delta());
 
 	const vinCrono = new Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
-			// txid, vout -> value, satoshi, hex_id, utxo_id
-			const voutFound = await explore.db.vout.vout.select(vin.txid, vin.vout);
+			// txid, vout -> value, hex
+			const voutFound = await explore.db.vout.vout.select(explore.db.downloadAll.clientDb, vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
-			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
-			assert(satoshi >= 0);
-			await explore.db.vout.hex.update(voutFound.hex_id, satoshi);
-			await explore.db.vout.utxo.updateSpent(voutFound.id);
+			const hash = util.sha256(voutFound.scriptPubKey.hex);
+			await explore.db.vout.hex.updateIncrement(hash, -util.bitcoinToSatoshi(voutFound.value));
+			await explore.db.vout.utxo.updateSpent(vin.txid, vin.vout);
 		}
 	}
-	profile.db.vin.increment(vinCrono.delta());
+	profile.db.vin.update(vinCrono.delta());
 };
+
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
@@ -121,8 +119,8 @@ const main = async () => {
 		lastBlock.height = 0;
 	}
 	console.log({height: lastBlock.height, nextblockhash: lastBlock.nextblockhash});
-
-	while (true) { // eslint-disable-line no-constant-condition
+	let pleaseExit = false;
+	while (!pleaseExit) { // eslint-disable-line no-constant-condition
 		const hasToStop = await explore.db.vout.controlFlow.hasToStop();
 		if (hasToStop === true) {
 			break;
@@ -133,6 +131,10 @@ const main = async () => {
 			const rpcCrono = new Crono();
 			assert(typeof lastBlock.nextblockhash !== 'undefined');
 			const lastBlockWrapper = await explore.db.downloadAll.block.findOne({'block.hash': lastBlock.nextblockhash});
+			if (!lastBlockWrapper) {
+				pleaseExit = true;
+				break;
+			}
 			lastBlock = lastBlockWrapper.block;
 			profile.rpc.increment(rpcCrono.delta());
 			assert(typeof lastBlock !== 'undefined');

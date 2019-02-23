@@ -27,6 +27,7 @@ const mongodb = async () => {
 	await createIndexes('block', blockIndexes);
 
 	const db = {
+		clientDb,
 		block: {
 			insert: async block => {
 				assert(typeof (block) !== 'undefined');
