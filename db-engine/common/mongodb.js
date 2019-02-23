@@ -109,9 +109,8 @@ function Mongodb() {
 			return ret;
 		},
 		getRef: async description => {
-			const ret = await self.clientDb.collection('spk_type').find({description}).toArray();
-			assert(ret.length === 1);
-			return ret[0]._id;
+			const ret = await self.clientDb.collection('spk_type').findOne({description});
+			return ret._id;
 		},
 		getCachedRefIf: async description => {
 			if (typeof self.cache.spkType[description] === 'undefined') {

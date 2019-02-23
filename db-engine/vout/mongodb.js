@@ -64,9 +64,8 @@ const mongodbVout = async () => {
 		hex: {
 			getRefByHash: async hash => {
 				assert(typeof hash !== 'undefined');
-				const ret = await clientDb.collection('hex').find({hash}).toArray();
-				assert(ret.length === 1);
-				return ret[0]._id;
+				const ret = await clientDb.collection('hex').findOne({hash});
+				return ret._id;
 			},
 			getCachedRefByHashIf: async hash => {
 				if (typeof mongo.cache.hex[hash] === 'undefined') {
