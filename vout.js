@@ -40,7 +40,8 @@ const profile = {
 	db: {
 		query: new DeltaSigma(0, 0), // ticks executing query on db
 		commit: new DeltaSigma(0, 0), // ticks executing commit on db
-		vout: new DeltaSigma(0, 0) // ticks executing commit on vout
+		vout: new DeltaSigma(0, 0), // ticks executing commit on vout
+		vin: new DeltaSigma(0, 0) // ticks executing commit on vin
 	},
 	tx: new DeltaSigma(0, 0), // number of transactions
 	profile: new DeltaSigma(0, 0),
@@ -85,22 +86,21 @@ const handleTransaction = async (raw, block_ref) => {
 	// });
 
 	profile.db.vout.increment(voutCrono.delta());
-	/*
+
 	const vinCrono = new Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
 			// txid, vout -> value, satoshi, hex_id, utxo_id
-			const voutFound = await explore.db.vout.select(vin.txid, vin.vout);
+			const voutFound = await explore.db.vout.vout.select(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = voutFound.satoshi - util.bitcoinToSatoshi(voutFound.value);
 			assert(satoshi >= 0);
-			await explore.db.hex.update(voutFound.hex_id, satoshi);
-			await explore.db.utxo.updateSpent(voutFound.id);
+			await explore.db.vout.hex.update(voutFound.hex_id, satoshi);
+			await explore.db.vout.utxo.updateSpent(voutFound.id);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
-	*/
 };
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
