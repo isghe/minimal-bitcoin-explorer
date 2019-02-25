@@ -21,8 +21,7 @@ const mongodbVout = async () => {
 
 	const blockIndexes = [
 		{index: {height: -1}, options: {unique: true}},
-		{index: {hash: -1}, options: {unique: true}},
-		{index: {nextblockhash: -1}, options: {unique: true}}
+		{index: {hash: -1}, options: {unique: true}}
 	];
 	await createIndexes('block', blockIndexes);
 
