@@ -102,8 +102,8 @@ const mongodbVout = async () => {
 			},
 
 			updateIncrement: async (hash, satoshi) => {
-				util.assert.isSatoshi (satoshi);
-				assert (satoshi < 0);
+				util.assert.isSatoshi(satoshi);
+				assert(satoshi < 0);
 				const result = await clientDb.collection('hex').updateOne({hash}, {
 					$inc: {
 						satoshi
