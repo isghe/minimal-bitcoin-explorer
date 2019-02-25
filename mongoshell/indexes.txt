@@ -143,9 +143,7 @@ db.utxo.aggregate({$match: {txid:'d3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9e
 db.block.createIndex (
  {
   'block.tx.txid': -1,
-  'block.tx.vout.n': -1,
- },
- {unique: true}
+ }
 );
 
 db.block.aggregate([
