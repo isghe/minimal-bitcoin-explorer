@@ -73,7 +73,7 @@ const handleTransaction = async (raw, block_ref) => {
 			const voutFound = await explore.db.vout.vout.select(explore.db.downloadAll.clientDb, vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const hash = util.sha256(voutFound.scriptPubKey.hex);
-			await explore.db.vout.hex.updateIncrement(hash, -util.bitcoinToSatoshi(voutFound.value));
+			await explore.db.vout.hex.updateIncrement(hash, util.bitcoinToSatoshi(voutFound.value));
 			await explore.db.vout.utxo.updateSpent(vin.txid, vin.vout);
 		}
 	}
