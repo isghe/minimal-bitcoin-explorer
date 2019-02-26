@@ -241,14 +241,13 @@ const mongodbVout = async () => {
 					{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
 					{$unwind: '$utxo_hex'},
 					{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
-					{$project: {_id: 1, value: 1, 'hex._id': 1, 'hex.satoshi': 1, 'utxo.vout': 1}}
+					{$project: {_id: 1, value: 1, 'hex._id': 1, 'utxo.vout': 1}}
 				).toArray();
 				assert(result.length === 1);
 				assert(result[0].hex.length === 1);
 				const ret = {
 					id: result[0]._id,
 					value: result[0].value,
-					satoshi: result[0].hex[0].satoshi,
 					hex_id: result[0].hex[0]._id
 				};
 				return ret;
