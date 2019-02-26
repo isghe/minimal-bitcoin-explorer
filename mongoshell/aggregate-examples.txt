@@ -11,18 +11,34 @@ db.block.createIndex (
 	}
 );
 
+564535
+
+db.block.find({'block.tx.txid': 'ac08f57fe3fa4625776ac7dd4b80a6b4690029c20001407591942928abd0f3f6'});
+
     // Get just the docs that contain a shapes element where color is 'red'
 db.block.aggregate([
-    {$match: {'block.tx.txid': 'cd54c8b011da69dcf36d8f1000cff199a699f5b02d6c89655c3bca1954253718'}},
+    {$match: {'block.tx.txid': '7f044171142e69036926211c128d16ed8c3c361bb6c259d04e4a026499f706d9'}},
     {$project: {
         'block.tx': {$filter: {
             input: '$block.tx',
             as: 'shape',
-            cond: {$eq: ['$$shape.txid', 'cd54c8b011da69dcf36d8f1000cff199a699f5b02d6c89655c3bca1954253718']}
+            cond: {$eq: ['$$shape.txid', '7f044171142e69036926211c128d16ed8c3c361bb6c259d04e4a026499f706d9']}
         }},
         _id: 0
     }}
-]).toArray()[0].block.tx[0].vout []
+]).toArray()[0].block.tx[0].vout [0]
+
+db.block.explain().aggregate([
+    {$match: {'block.tx.txid': '7f044171142e69036926211c128d16ed8c3c361bb6c259d04e4a026499f706d9'}},
+    {$project: {
+        'block.tx': {$filter: {
+            input: '$block.tx',
+            as: 'shape',
+            cond: {$eq: ['$$shape.txid', '7f044171142e69036926211c128d16ed8c3c361bb6c259d04e4a026499f706d9']}
+        }},
+        _id: 0
+    }}
+])
 
     // Get just the docs that contain a shapes element where color is 'red'
 db.block.aggregate([
@@ -44,6 +60,12 @@ db.block.aggregate([
 		_id:1
 	}}
 ])
+
+db.block.find(
+   {'block.tx.txid': '0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098'},
+   {'block.tx': {$elemMatch: {txid: '0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098'}}}
+)
+
 
 db.test.aggregate([
     {$match: {'shapes.color': 'red'}},

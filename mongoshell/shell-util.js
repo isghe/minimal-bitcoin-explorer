@@ -34,3 +34,4 @@ const insertSpkTypeRef = () => {
 };
 
 db.controlFlow.update({}, {stoppedSuccesfully: true, hasToStop: false});
+db.block.find().sort({height: -1}).limit(1);
