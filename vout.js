@@ -85,7 +85,7 @@ const handleTransaction = async (raw, block_ref) => {
 	}
 	// });
 
-	profile.db.vout.increment(voutCrono.delta());
+	profile.db.vout.update(voutCrono.delta());
 
 	const vinCrono = new Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
@@ -103,8 +103,9 @@ const handleTransaction = async (raw, block_ref) => {
 */
 		}
 	}
-	profile.db.vin.increment(vinCrono.delta());
+	profile.db.vin.update(vinCrono.delta());
 };
+
 const main = async () => {
 	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
