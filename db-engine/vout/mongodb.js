@@ -105,10 +105,11 @@ const mongodbVout = async () => {
 				return ret;
 			},
 
-			upsert: async (hex, hash, spk_type_ref, satoshi) => {
+			upsert: async (hex, hash, spk_type_ref, satoshi_in) => {
 				const result = await clientDb.collection('hex').updateOne({hash}, {
 					$inc: {
-						satoshi,
+						satoshi_in,
+						satoshi_out: 0,
 						counter: 1
 					},
 					$set: {
@@ -125,10 +126,14 @@ const mongodbVout = async () => {
 				return ret;
 			},
 
-			update: async (hex_id, satoshi) => {
-				assert(typeof hex_id !== 'undefined');
+			updateIncrement: async (hex_ref, satoshi_out) => {
 				util.assert.isSatoshi(satoshi);
-				const updateResult = await clientDb.collection('hex').updateOne({_id: hex_id}, {$set: {satoshi}});
+				assert(satoshi >= 0);
+				const result = await clientDb.collection('hex').updateOne({hex_ref}, {
+					$inc: {
+						satoshi_out
+					}
+				});
 
 				return updateResult;
 			}
