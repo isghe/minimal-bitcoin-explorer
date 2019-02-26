@@ -146,6 +146,16 @@ db.block.createIndex (
  }
 );
 
+{address: -1, hex_ref: -1}, options: {unique: true}}
+
+db.address.createIndex (
+ {
+  'address': -1,
+  hex_ref: -1,
+  spk_type_ref: -1
+ },
+ {unique: true}
+);
 db.block.aggregate([
     // Get just the docs that contain a shapes element where color is 'red'
     {$match: {'block.tx.txid': 'd3ad39fa52a89997ac7381c95eeffeaf40b66af7a57e9eba144be0a175a12b11', 'block.tx.vout.n': 0}},
