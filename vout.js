@@ -39,7 +39,6 @@ const handleTransaction = async (raw, block_ref) => {
 		const vout = raw.vout[i];
 		assert(typeof vout !== 'undefined');
 		let spk_type_ref = await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
-		await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value);
 
 		if (spk_type_ref === null) {
 			spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
@@ -47,10 +46,11 @@ const handleTransaction = async (raw, block_ref) => {
 		const hash = util.sha256(vout.scriptPubKey.hex);
 
 		let hex_ref = await explore.db.vout.hex.upsert(vout.scriptPubKey.hex, hash, spk_type_ref, util.bitcoinToSatoshi(vout.value));
+		/*
 		if (util.sha256(vout.scriptPubKey.hex) === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
 			console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
 		}
-
+		*/
 		if (hex_ref === null) {
 			hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
 		}
@@ -74,7 +74,6 @@ const handleTransaction = async (raw, block_ref) => {
 			assert(typeof voutFound !== 'undefined');
 			const hash = util.sha256(voutFound.scriptPubKey.hex);
 			await explore.db.vout.hex.updateIncrement(hash, util.bitcoinToSatoshi(voutFound.value));
-			await explore.db.vout.utxo.updateSpent(vin.txid, vin.vout);
 		}
 	}
 	profile.db.vin.update(vinCrono.delta());

@@ -40,11 +40,6 @@ const mongodbVout = async () => {
 	];
 	await createIndexes('hex', hexIndexes);
 
-	const utxoIndexes = [
-		{index: {txid: -1, vout: -1}}
-	];
-	await createIndexes('utxo', utxoIndexes);
-
 	const db = {
 		block: {
 			insert: async block => {
@@ -129,41 +124,6 @@ const mongodbVout = async () => {
 					}
 				}, {upsert: true});
 				return {};
-			}
-		},
-
-		utxo: {
-			insert: async (txid, vout, value) => {
-				const insertResult = await clientDb.collection('utxo').insertOne({
-					txid,
-					vout,
-					value,
-					spent: false
-				});
-
-				return {
-					lastInsertRowid: insertResult.insertedId
-				};
-			},
-
-			updateSpent: async (txid, vout) => {
-				const result = await clientDb.collection('utxo').updateOne({txid, vout}, {$set: {spent: true}});
-				assert(result.matchedCount === 1);
-				assert(result.modifiedCount === 1);
-				return result;
-			}
-		},
-
-		utxoHex: {
-			insert: async (utxo_ref, hex_ref) => {
-				const insertResult = await clientDb.collection('utxo_hex').insertOne({
-					utxo_ref,
-					hex_ref
-				});
-
-				return {
-					lastInsertRowid: insertResult.insertedId
-				};
 			}
 		},
 
