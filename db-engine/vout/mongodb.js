@@ -66,24 +66,28 @@ const mongodbVout = async () => {
 					lastInsertRowid: insertResult.insertedId
 				};
 			},
+
 			selectLast: async count => {
 				const block = await clientDb.collection('block').find({}, {block: 1}).sort({height: -1}).limit(1).toArray();
 				assert(block.length === 1);
 				return block[0];
 			}
 		},
+
 		hex: {
 			getRefByHash: async hash => {
 				assert(typeof hash !== 'undefined');
 				const ret = await clientDb.collection('hex').findOne({hash});
 				return ret._id;
 			},
+
 			getCachedRefByHashIf: async hash => {
 				if (typeof mongo.cache.hex[hash] === 'undefined') {
 					mongo.cache.hex[hash] = await db.hex.getRefByHash(hash);
 				}
 				return mongo.cache.hex[hash];
 			},
+
 			upsertOld: async (hex, hash, spk_type_ref, satoshi) => {
 				assert(typeof hex !== 'undefined');
 				util.assert.isSatoshi(satoshi);
@@ -131,15 +135,19 @@ const mongodbVout = async () => {
 			updateIncrement: async (_id, satoshi_out) => {
 				util.assert.isSatoshi(satoshi_out);
 				assert(satoshi_out >= 0);
-				const updateResult = await clientDb.collection('hex').updateOne({_id}, {
+				const result = await clientDb.collection('hex').updateOne({_id}, {
 					$inc: {
 						satoshi_out
 					}
 				});
 
-				return updateResult;
+				assert(result.matchedCount === 1);
+				assert(result.modifiedCount === 1);
+
+				return result;
 			}
 		},
+
 		address: {
 			upsertOld: async (address, hex_ref, spk_type_ref) => {
 				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
@@ -156,6 +164,7 @@ const mongodbVout = async () => {
 				}
 				return {};
 			},
+
 			upsert: async (address, hex_ref, spk_type_ref) => {
 				await clientDb.collection('address').updateOne({address, hex_ref}, {
 					$inc: {
@@ -170,6 +179,7 @@ const mongodbVout = async () => {
 				return {};
 			}
 		},
+
 		utxo: {
 			insert: async (txid, vout, value) => {
 				const insertResult = await clientDb.collection('utxo').insertOne({
@@ -183,11 +193,17 @@ const mongodbVout = async () => {
 					lastInsertRowid: insertResult.insertedId
 				};
 			},
+
 			updateSpent: async id => {
-				const updateResult = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
-				return updateResult;
+				const result = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
+
+				assert(result.matchedCount === 1);
+				assert(result.modifiedCount === 1);
+
+				return result;
 			}
 		},
+
 		utxoHex: {
 			insert: async (utxo_ref, hex_ref) => {
 				const insertResult = await clientDb.collection('utxo_hex').insertOne({
@@ -200,6 +216,7 @@ const mongodbVout = async () => {
 				};
 			}
 		},
+
 		vout: {
 			selectTest: async (txid, voutN) => {
 				const vout = db.block.aggregate([
@@ -214,6 +231,7 @@ const mongodbVout = async () => {
 					}}
 				]).toArray()[0].block.tx[0].vout[voutN];
 			},
+
 			selectOld: async (txid, vout) => {
 				const utxo = await clientDb.collection('utxo').find({txid, vout}).toArray();
 				assert(utxo.length === 1);
@@ -229,6 +247,7 @@ const mongodbVout = async () => {
 					hex_id: hex[0]._id
 				};
 			},
+
 			/*
 			> db.h_transaction.aggregate({$match: {txid:'f925f26deb2dc4696be8782ab7ad9493d04721b28ee69a09d7dfca51b863ca23'}}, { $lookup:{ from:'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo' } } ,{$unwind:'$utxo'}, {$match:{"utxo.vout": 0}},{ $lookup:{ from:'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex' }}, {$unwind:'$utxo_hex'}, {$lookup:{ from:'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
 {$project:{'utxo._id':1, 'utxo.value':1, 'hex._id':1, 'hex.satoshi':1, 'utxo.vout':1}});
