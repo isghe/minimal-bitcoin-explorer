@@ -1,8 +1,8 @@
 'use strict';
+const assert = require('assert');
 
 const testUtil = () => {
 	const ret = {};
-	const assert = require('assert');
 	const util = require('./lib/util.js');
 
 	// 32.91*100000000 = 3290999999.9999995!!!
@@ -35,6 +35,14 @@ const testDownloadMongo = async () => {
 	return ret;
 };
 
+const testAssertFailure = async () => {
+	try {
+		assert(false);
+	} catch (error) {
+		return {error};
+	}
+};
+
 const testVoutMongo = async () => {
 	const ret = {};
 	const db = await require('./db-engine/vout/mongodb');
@@ -51,6 +59,7 @@ const testVoutMongo = async () => {
 
 const main = async () => {
 	const test = {
+		testAssertFailure: await testAssertFailure(),
 		testUtil: testUtil(),
 		testDownloadMongo: await testDownloadMongo(),
 		testVoutMongo: await testVoutMongo()

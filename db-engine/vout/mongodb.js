@@ -140,11 +140,17 @@ const mongodbVout = async () => {
 						satoshi_out
 					}
 				});
+				try {
+					assert(result.matchedCount === 1);
+					assert(result.modifiedCount === 1); // block 125776
 
-				assert(result.matchedCount === 1);
-				assert(result.modifiedCount === 1);
-
-				return result;
+					return result;
+				} catch (error) {
+					console.log({_id, satoshi_out, modifiedCount: result.modifiedCount});
+					const hex = await clientDb.collection('hex').find({_id}).toArray();
+					console.log(JSON.stringify({hex}));
+					assert(false);
+				}
 			}
 		},
 
