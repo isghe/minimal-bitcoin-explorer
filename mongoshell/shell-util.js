@@ -5,16 +5,17 @@
 
 'use strict';
 
-const testJoin = (txid, vout) => {
-	db.h_transaction.aggregate(
+let testJoin = (txid, vout) => {
+	const result = db.h_transaction.aggregate(
 		{$match: {txid}},
 		{$lookup: {from: 'utxo', localField: '_id', foreignField: 'transaction_ref', as: 'utxo'}},
 		{$unwind: '$utxo'},
-		{$match: {'utxo.vout': vout, 'utxo.spent': true}},
+		{$match: {'utxo.vout': vout, 'utxo.spent': false}},
 		{$lookup: {from: 'utxo_hex', localField: 'utxo._id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
 		{$unwind: '$utxo_hex'},
 		{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
 		{$project: {'utxo._id': 1, 'utxo.value': 1, 'hex._id': 1, 'hex.satoshi': 1, 'utxo.vout': 1}}).toArray();
+	return result;
 };
 
 const insertSpkTypeRef = () => {
@@ -34,3 +35,37 @@ const insertSpkTypeRef = () => {
 };
 
 db.controlFlow.update({}, {stoppedSuccesfully: true, hasToStop: false});
+
+testJoin = (txid, vout) => {
+	const result = db.utxo.aggregate(
+		{$match: {txid, vout}},
+		{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
+		{$unwind: '$utxo_hex'},
+		{$lookup: {from: 'hex', localField: 'utxo_hex.hex_ref', foreignField: '_id', as: 'hex'}},
+		{$project: {_id: 1, value: 1, 'hex._id': 1}}
+	).toArray();
+	return result;
+};
+
+testJoin = (txid, vout) => {
+	const result = db.utxo.aggregate(
+		{$match: {txid, vout}},
+		{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
+		{$unwind: '$utxo_hex'},
+	).toArray();
+	return result;
+};
+
+testJoin = (txid, vout) => {
+	const result = db.utxo.aggregate(
+		{$match: {txid, vout}},
+		{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}}
+	).toArray();
+	return result;
+};
+
+testJoin = (txid, vout) => {
+	const result = db.utxo.find({txid, vout}
+	).toArray();
+	return result;
+};

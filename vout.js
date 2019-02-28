@@ -91,7 +91,7 @@ const handleTransaction = async (raw, block_ref) => {
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
-			// txid, vout -> value, satoshi, hex_id, utxo_id
+			// txid, vout -> value, hex_id, utxo_id
 			const voutFound = await explore.db.vout.vout.select(vin.txid, vin.vout);
 			assert(typeof voutFound !== 'undefined');
 			const satoshi = util.bitcoinToSatoshi(voutFound.value);
