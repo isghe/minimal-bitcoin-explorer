@@ -21,8 +21,7 @@ const mongodbVout = async () => {
 
 	const blockIndexes = [
 		{index: {height: -1}, options: {unique: true}},
-		{index: {hash: -1}, options: {unique: true}},
-		{index: {nextblockhash: -1}, options: {unique: true}}
+		{index: {hash: -1}, options: {unique: true}}
 	];
 	await createIndexes('block', blockIndexes);
 
@@ -134,7 +133,7 @@ const mongodbVout = async () => {
 
 			updateIncrement: async (_id, satoshi_out) => {
 				util.assert.isSatoshi(satoshi_out);
-				assert(satoshi_out >= 0);
+				assert(satoshi_out > 0);
 				const result = await clientDb.collection('hex').updateOne({_id}, {
 					$inc: {
 						satoshi_out
