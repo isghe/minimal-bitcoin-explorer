@@ -7,7 +7,6 @@ const assert = require('assert');
 const util = require('./lib/util.js');
 
 const explore = {
-	bc: null,
 	db: {
 		downloadAll: null,
 		vout: null
@@ -109,14 +108,13 @@ const handleTransaction = async (raw, block_ref) => {
 };
 
 const main = async () => {
-	const BitcoinCore = require('bitcoin-core');
 	const configuration = require('./configuration');
 	explore.db.downloadAll = await require('./db-engine/download-all/' + configuration.dbEngine.downloadAll.name);
 	explore.db.vout = await require('./db-engine/vout/' + configuration.dbEngine.vout.name);
 	console.log('Current db-engine: ' + configuration.dbEngine.vout.name);
 	const stoppedSuccesfully = await explore.db.vout.controlFlow.stoppedSuccesfully();
 	assert(stoppedSuccesfully === true);
-	explore.bc = new BitcoinCore(configuration.bitcoinCore);
+
 	let lastBlock = {};
 	const count = (await explore.db.vout.block.selectCount()).ts_counter;
 	if (count > 0) {
