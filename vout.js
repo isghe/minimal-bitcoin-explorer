@@ -85,7 +85,7 @@ const handleTransaction = async (raw, block_ref) => {
 	}
 	// });
 
-	profile.db.vout.update(voutCrono.delta());
+	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new Crono();
 	for (let z = 0; z < raw.vin.length; ++z) {
@@ -105,7 +105,7 @@ const handleTransaction = async (raw, block_ref) => {
 */
 		}
 	}
-	profile.db.vin.update(vinCrono.delta());
+	profile.db.vin.increment(vinCrono.delta());
 };
 
 const main = async () => {
@@ -167,6 +167,8 @@ const main = async () => {
 		console.log(JSON.stringify({profile, info: explore.db.vout.info()}));
 
 		profile.db.query.delta = 0;
+		profile.db.vout.delta = 0;
+		profile.db.vin.delta = 0;
 		profile.rpc.delta = 0;
 		profile.tx.delta = 0;
 	}
