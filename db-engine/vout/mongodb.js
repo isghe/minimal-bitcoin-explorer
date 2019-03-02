@@ -31,7 +31,8 @@ const mongodbVout = async () => {
 	await createIndexes('spk_type', spkTypeIndexes);
 
 	const addressIndexes = [
-		{index: {address: -1, hex_ref: -1}, options: {unique: true}}
+		{index: {address: -1, hex_ref: -1}, options: {unique: true}},
+		{index: {hex_ref: -1, spk_type_ref: -1}, options: {unique: true}},
 	];
 	await createIndexes('address', addressIndexes);
 
@@ -44,12 +45,6 @@ const mongodbVout = async () => {
 		{index: {txid: -1, vout: -1}}
 	];
 	await createIndexes('utxo', utxoIndexes);
-
-	const utxoHexIndexes = [
-		{index: {utxo_ref: -1}, options: {unique: true}},
-		{index: {hex_ref: -1}}
-	];
-	await createIndexes('utxo_hex', utxoHexIndexes);
 
 	const db = {
 		block: {
@@ -149,11 +144,12 @@ const mongodbVout = async () => {
 		},
 
 		utxo: {
-			insert: async (txid, vout, value) => {
+			insert: async (txid, vout, value, hex_ref) => {
 				const insertResult = await clientDb.collection('utxo').insertOne({
 					txid,
 					vout,
 					value,
+					hex_ref,
 					spent: false
 				});
 
@@ -169,45 +165,22 @@ const mongodbVout = async () => {
 				assert(result.modifiedCount === 1);
 
 				return result;
-			}
-		},
+			},
 
-		utxoHex: {
-			insert: async (utxo_ref, hex_ref) => {
-				const insertResult = await clientDb.collection('utxo_hex').insertOne({
-					utxo_ref,
-					hex_ref
-				});
-
-				return {
-					lastInsertRowid: insertResult.insertedId
-				};
-			}
-		},
-
-		vout: {
 			select: async (txid, vout) => {
 			// https://www.mongodb.com/blog/post/joins-and-other-aggregation-enhancements-coming-in-mongodb-3-2-part-1-of-3-introduction
 				/*
 "{
-        "id": "5c7808790877b31cbeb475bb",
+        "_id": "5c7808790877b31cbeb475bb",
         "value": 50,
-        "hex_id": "5c78087985642f323080775b"
+        "hex_ref": "5c78087985642f323080775b"
 }"
 */
-				const result = await clientDb.collection('utxo').aggregate(
-					{$match: {txid, vout}},
-					{$lookup: {from: 'utxo_hex', localField: '_id', foreignField: 'utxo_ref', as: 'utxo_hex'}},
-					{$unwind: '$utxo_hex'}
-				).toArray();
-				assert(result.length === 1);
-				assert(result[0].utxo_hex.length === 1);
-				const ret = {
-					id: result[0]._id,
-					value: result[0].value,
-					hex_id: result[0].utxo_hex[0].hex_ref
-				};
-				return ret;
+				const result = await clientDb.collection('utxo').findOne({
+					txid,
+					vout
+				});
+				return result;
 			}
 		}
 	};

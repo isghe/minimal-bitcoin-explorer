@@ -58,8 +58,6 @@ const handleTransaction = async (raw, block_ref) => {
 		const vout = raw.vout[i];
 		assert(typeof vout !== 'undefined');
 		let spk_type_ref = await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
-		const utxo = await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value);
-		const utxo_ref = utxo.lastInsertRowid;
 
 		if (spk_type_ref === null) {
 			spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
@@ -75,7 +73,9 @@ const handleTransaction = async (raw, block_ref) => {
 			hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
 		}
 
-		await explore.db.vout.utxoHex.insert(utxo_ref, hex_ref);
+		const utxo = await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value, hex_ref);
+		const utxo_ref = utxo.lastInsertRowid;
+
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
 				await explore.db.vout.address.upsert(vout.scriptPubKey.addresses[j], hex_ref, spk_type_ref);
@@ -90,18 +90,14 @@ const handleTransaction = async (raw, block_ref) => {
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
-			// txid, vout -> value, hex_id, utxo_id
-			const voutFound = await explore.db.vout.vout.select(vin.txid, vin.vout);
-			assert(typeof voutFound !== 'undefined');
-			const satoshi = util.bitcoinToSatoshi(voutFound.value);
+			// txid, vout -> value, hex_ref, utxo_id
+			const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout);
+			assert(typeof utxo !== 'undefined');
+			const satoshi = util.bitcoinToSatoshi(utxo.value);
 			if (satoshi > 0) {
-				await explore.db.vout.hex.updateIncrement(voutFound.hex_id, satoshi);
+				await explore.db.vout.hex.updateIncrement(utxo.hex_ref, satoshi);
 			}
-			await explore.db.vout.utxo.updateSpent(voutFound.id);
-			/*			const hash = util.sha256(voutFound.scriptPubKey.hex);
-			await explore.db.vout.hex.updateIncrement(hash, util.bitcoinToSatoshi(voutFound.value));
-			await explore.db.vout.utxo.updateSpent(vin.txid, vin.vout);
-*/
+			await explore.db.vout.utxo.updateSpent(utxo._id);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
