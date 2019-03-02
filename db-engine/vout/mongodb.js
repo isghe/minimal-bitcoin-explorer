@@ -87,27 +87,6 @@ const mongodbVout = async () => {
 				return mongo.cache.hex[hash];
 			},
 
-			upsertOld: async (hex, hash, spk_type_ref, satoshi) => {
-				assert(typeof hex !== 'undefined');
-				util.assert.isSatoshi(satoshi);
-				const ret = {};
-				const spkType = await clientDb.collection('hex').find({hash}).toArray();
-				assert(spkType.length <= 1);
-				if (spkType.length === 0) {
-					const insertResult = await clientDb.collection('hex').insertOne({
-						hex,
-						hash,
-						spk_type_ref,
-						satoshi,
-						counter: 1
-					});
-					ret.lastInsertRowid = insertResult.insertedId;
-				} else {
-					await clientDb.collection('hex').updateOne({hash}, {$set: {counter: spkType[0].counter + 1, satoshi: spkType[0].satoshi + satoshi}});
-				}
-				return ret;
-			},
-
 			upsert: async (hex, hash, spk_type_ref, satoshi_in) => {
 				util.assert.isSatoshi(satoshi_in);
 				assert(satoshi_in >= 0);
@@ -154,22 +133,6 @@ const mongodbVout = async () => {
 		},
 
 		address: {
-			upsertOld: async (address, hex_ref, spk_type_ref) => {
-				const spkType = await clientDb.collection('address').find({address, hex_ref}).toArray();
-				assert(spkType.length <= 1);
-				if (spkType.length === 0) {
-					await clientDb.collection('address').insertOne({
-						address,
-						hex_ref,
-						spk_type_ref,
-						counter: 1
-					});
-				} else {
-					await clientDb.collection('address').updateOne({address, hex_ref}, {$set: {counter: spkType[0].counter + 1}});
-				}
-				return {};
-			},
-
 			upsert: async (address, hex_ref, spk_type_ref) => {
 				await clientDb.collection('address').updateOne({address, hex_ref}, {
 					$inc: {
@@ -223,36 +186,6 @@ const mongodbVout = async () => {
 		},
 
 		vout: {
-			selectTest: async (txid, voutN) => {
-				const vout = db.block.aggregate([
-					{$match: {'block.tx.txid': txid}},
-					{$project: {
-						'block.tx': {$filter: {
-							input: '$block.tx',
-							as: 'tx',
-							cond: {$eq: ['$$tx.txid', txid]}
-						}},
-						_id: 0
-					}}
-				]).toArray()[0].block.tx[0].vout[voutN];
-			},
-
-			selectOld: async (txid, vout) => {
-				const utxo = await clientDb.collection('utxo').find({txid, vout}).toArray();
-				assert(utxo.length === 1);
-
-				const utxo_hex = await clientDb.collection('utxo_hex').find({utxo_ref: utxo[0]._id}).toArray();
-				assert(utxo_hex.length === 1);
-				const hex = await clientDb.collection('hex').find({_id: utxo_hex[0].hex_ref}).toArray();
-				assert(hex.length === 1);
-
-				return {
-					id: utxo[0]._id,
-					value: utxo[0].value,
-					hex_id: hex[0]._id
-				};
-			},
-
 			select: async (txid, vout) => {
 			// https://www.mongodb.com/blog/post/joins-and-other-aggregation-enhancements-coming-in-mongodb-3-2-part-1-of-3-introduction
 				/*
