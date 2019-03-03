@@ -78,7 +78,8 @@ const handleTransaction = async (raw, block_ref) => {
 
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
-				await explore.db.vout.address.upsert(vout.scriptPubKey.addresses[j], hex_ref, spk_type_ref);
+				const address = vout.scriptPubKey.addresses[j];
+				await explore.db.vout.address.upsert({address, spk_type_ref}, hex_ref);
 			}
 		}
 	}

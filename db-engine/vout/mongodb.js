@@ -31,9 +31,9 @@ const mongodbVout = async () => {
 	await createIndexes('spk_type', spkTypeIndexes);
 
 	const addressIndexes = [
-		{index: {address: -1, hex_ref: -1}, options: {unique: true}},
-		{index: {hex_ref: -1, spk_type_ref: -1}, options: {unique: true}},
+		{index: {address: -1, hex_ref: -1}, options: {unique: true}}
 	];
+
 	await createIndexes('address', addressIndexes);
 
 	const hexIndexes = [
@@ -128,15 +128,20 @@ const mongodbVout = async () => {
 		},
 
 		address: {
-			upsert: async (address, hex_ref, spk_type_ref) => {
+			upsert: async (address, hex_ref) => {
+			// address = {address, spk_type_ref}
+				assert(typeof address !== 'undefined');
+				assert(typeof address.address !== 'undefined');
+				assert(typeof address.spk_type_ref !== 'undefined');
+				assert(typeof hex_ref !== 'undefined');
+
 				await clientDb.collection('address').updateOne({address, hex_ref}, {
 					$inc: {
 						counter: 1
 					},
 					$set: {
-						address,
-						hex_ref,
-						spk_type_ref
+						address, // {address, spk_type_ref}
+						hex_ref
 					}
 				}, {upsert: true});
 				return {};
