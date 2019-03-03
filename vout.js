@@ -73,8 +73,7 @@ const handleTransaction = async (raw, block_ref) => {
 			hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
 		}
 
-		const utxo = await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value, hex_ref);
-		const utxo_ref = utxo.lastInsertRowid;
+		await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value, hex_ref);
 
 		if (vout.scriptPubKey.addresses) {
 			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
