@@ -167,7 +167,7 @@ const mongodbVout = async () => {
 				return result;
 			},
 
-			select: async (txid, vout) => {
+			select: async (txid, vout, spent) => {
 			// https://www.mongodb.com/blog/post/joins-and-other-aggregation-enhancements-coming-in-mongodb-3-2-part-1-of-3-introduction
 				/*
 "{
@@ -178,8 +178,10 @@ const mongodbVout = async () => {
 */
 				const result = await clientDb.collection('utxo').findOne({
 					txid,
-					vout
+					vout,
+					spent
 				});
+				assert(typeof result !== 'undefined');
 				return result;
 			}
 		}
