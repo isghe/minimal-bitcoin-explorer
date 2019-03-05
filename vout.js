@@ -28,9 +28,8 @@ const profile = {
 	'tx/s': null // new util.DeltaSigma(0, 0)
 };
 
-const handleTransaction = async (raw, block_ref) => {
+const handleTransaction = async raw => {
 	assert(typeof raw !== 'undefined');
-	assert(typeof block_ref !== 'undefined');
 
 	const voutCrono = new util.Crono();
 	for (let i = 0; i < raw.vout.length; ++i) {
@@ -123,7 +122,7 @@ const main = async () => {
 			assert(typeof insertBlockResult.lastInsertRowid !== 'undefined');
 			profile.tx.increment(lastBlock.tx.length);
 			for (let z = 0; z < lastBlock.tx.length; ++z) {
-				await handleTransaction(lastBlock.tx[z], insertBlockResult.lastInsertRowid);
+				await handleTransaction(lastBlock.tx[z]);
 			}
 
 			profile.db.query.increment(dbCrono.delta());
