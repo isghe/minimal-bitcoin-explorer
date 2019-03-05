@@ -163,8 +163,11 @@ const mongodbVout = async () => {
 				};
 			},
 
-			updateSpent: async id => {
-				const result = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: true}});
+			updateSpent: async (id, txid) => {
+				assert(typeof id !== 'undefined');
+				assert(typeof txid !== 'undefined');
+
+				const result = await clientDb.collection('utxo').updateOne({_id: id}, {$set: {spent: txid}});
 
 				assert(result.matchedCount === 1);
 				assert(result.modifiedCount === 1);

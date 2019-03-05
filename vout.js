@@ -75,7 +75,7 @@ const handleTransaction = async raw => {
 			if (satoshi > 0) {
 				await explore.db.vout.hex.updateIncrement(utxo.hex_ref, satoshi);
 			}
-			await explore.db.vout.utxo.updateSpent(utxo._id);
+			await explore.db.vout.utxo.updateSpent(utxo._id, raw.txid);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
