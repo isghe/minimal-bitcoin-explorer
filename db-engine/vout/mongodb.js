@@ -186,8 +186,7 @@ const mongodbVout = async () => {
 */
 				const result = await clientDb.collection('utxo').findOne({
 					txid,
-					vout,
-					spent
+					vout
 				});
 				assert(typeof result !== 'undefined');
 				return result;
