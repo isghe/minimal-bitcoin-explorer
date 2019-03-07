@@ -66,17 +66,30 @@ const handleTransaction = async raw => {
 	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new util.Crono();
+
+	const utxos = [];
+	const bulks = {
+		hex: await explore.db.vout.hex.initializeUnorderedBulkOp(),
+		utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp()
+	};
 	for (let z = 0; z < raw.vin.length; ++z) {
 		const vin = raw.vin[z];
 		if (!vin.coinbase) {
 			// txid, vout -> value, hex_ref, utxo_id
 			const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout, false);
+			utxos.push(utxo);
 			const satoshi = util.bitcoinToSatoshi(utxo.value);
 			if (satoshi > 0) {
-				await explore.db.vout.hex.updateIncrement(utxo.hex_ref, satoshi);
+				await explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi);
 			}
-			await explore.db.vout.utxo.updateSpent(utxo._id, raw.txid);
+			await explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid);
 		}
+	}
+	if (bulks.hex.length > 0) {
+		await bulks.hex.execute();
+	}
+	if (bulks.utxo.length > 0) {
+		await bulks.utxo.execute();
 	}
 	profile.db.vin.increment(vinCrono.delta());
 };

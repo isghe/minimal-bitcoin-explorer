@@ -124,7 +124,24 @@ const mongodbVout = async () => {
 					console.log(JSON.stringify({hex}));
 					assert(false);
 				}
+			},
+
+			initializeUnorderedBulkOp: async () => {
+				const result = await clientDb.collection('utxo').initializeUnorderedBulkOp();
+				return result;
+			},
+
+			updateIncrementBulk: async (bulk, _id, satoshi_out) => {
+				util.assert.isSatoshi(satoshi_out);
+				assert(satoshi_out > 0);
+				const result = await bulk.find({_id}).updateOne({
+					$inc: {
+						satoshi_out
+					}
+				});
+				return result;
 			}
+
 		},
 
 		address: {
@@ -172,6 +189,19 @@ const mongodbVout = async () => {
 				assert(result.matchedCount === 1);
 				assert(result.modifiedCount === 1);
 
+				return result;
+			},
+
+			initializeUnorderedBulkOp: async () => {
+				const result = await clientDb.collection('utxo').initializeUnorderedBulkOp();
+				return result;
+			},
+
+			updateSpentBulk: async (bulk, id, txid) => {
+				assert(typeof id !== 'undefined');
+				assert(typeof txid !== 'undefined');
+
+				const result = await bulk.find({_id: id}).updateOne({$set: {spent: txid}});
 				return result;
 			},
 
