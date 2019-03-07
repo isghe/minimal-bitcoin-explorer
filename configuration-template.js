@@ -5,11 +5,13 @@ const configuration = () => {
 	const names = [
 		'sqlite',
 		'fake',
-		'mongodb'
+		'mongodb',
+		'ram'
 	];
 	const applications = [
 		'explore',
-		'download-all'
+		'download-all',
+		'vout'
 	];
 	return {
 		application: applications[0],
@@ -62,6 +64,10 @@ const configuration = () => {
 				mongo: {
 					url: 'mongodb://localhost:27017',
 					dbName: 'vout'
+				},
+				ram: {
+					url: 'mongodb://localhost:27017',
+					dbName: 'vout-ram'
 				}
 			}
 		},
