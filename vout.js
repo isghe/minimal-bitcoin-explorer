@@ -32,64 +32,77 @@ const handleTransaction = async raw => {
 	assert(typeof raw !== 'undefined');
 
 	const voutCrono = new util.Crono();
-	for (let i = 0; i < raw.vout.length; ++i) {
-	// await raw.vout.forEach(async vout => {
-		const vout = raw.vout[i];
-		assert(typeof vout !== 'undefined');
-		let spk_type_ref = await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
+	{
+		const bulks = {
+			utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp(),
+			address: await explore.db.vout.address.initializeUnorderedBulkOp()
+		};
+		for (let i = 0; i < raw.vout.length; ++i) {
+		// await raw.vout.forEach(async vout => {
+			const vout = raw.vout[i];
+			assert(typeof vout !== 'undefined');
+			let spk_type_ref = await explore.db.vout.spkType.upsert(vout.scriptPubKey.type);
 
-		if (spk_type_ref === null) {
-			spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
-		}
-		const hash = util.sha256(vout.scriptPubKey.hex);
+			if (spk_type_ref === null) {
+				spk_type_ref = await explore.db.vout.spkType.getCachedRefIf(vout.scriptPubKey.type);
+			}
+			const hash = util.sha256(vout.scriptPubKey.hex);
 
-		let hex_ref = await explore.db.vout.hex.upsert(vout.scriptPubKey.hex, hash, spk_type_ref, util.bitcoinToSatoshi(vout.value));
-		if (hash === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
-			console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
-		}
+			let hex_ref = await explore.db.vout.hex.upsert(vout.scriptPubKey.hex, hash, spk_type_ref, util.bitcoinToSatoshi(vout.value));
+			if (hash === 'b58bb87c47b96d1a4dff14b4cc042e2aa88d1a92da80c683f3fc84a6bddceb6b') {
+				console.log(vout.scriptPubKey.hex); // 18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB, p2pk and p2pkh
+			}
 
-		if (hex_ref === null) {
-			hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
-		}
+			if (hex_ref === null) {
+				hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
+			}
 
-		await explore.db.vout.utxo.insert(raw.txid, vout.n, vout.value, hex_ref);
+			await explore.db.vout.utxo.insertBulk(bulks.utxo, raw.txid, vout.n, vout.value, hex_ref);
 
-		if (vout.scriptPubKey.addresses) {
-			for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
-				const address = vout.scriptPubKey.addresses[j];
-				await explore.db.vout.address.upsert({address, spk_type_ref}, hex_ref);
+			if (vout.scriptPubKey.addresses) {
+				for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
+					const address = vout.scriptPubKey.addresses[j];
+					await explore.db.vout.address.upsertBulk(bulks.address, {address, spk_type_ref}, hex_ref);
+				}
 			}
 		}
-	}
-	// });
+		// });
 
+		if (bulks.address.length > 0) {
+			await bulks.address.execute();
+		}
+		if (bulks.utxo.length > 0) {
+			await bulks.utxo.execute();
+		}
+	}
 	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new util.Crono();
-
-	const utxos = [];
-	const bulks = {
-		hex: await explore.db.vout.hex.initializeUnorderedBulkOp(),
-		utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp()
-	};
-	for (let z = 0; z < raw.vin.length; ++z) {
-		const vin = raw.vin[z];
-		if (!vin.coinbase) {
-			// txid, vout -> value, hex_ref, utxo_id
-			const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout, false);
-			utxos.push(utxo);
-			const satoshi = util.bitcoinToSatoshi(utxo.value);
-			if (satoshi > 0) {
-				await explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi);
+	{
+		const utxos = [];
+		const bulks = {
+			hex: await explore.db.vout.hex.initializeUnorderedBulkOp(),
+			utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp()
+		};
+		for (let z = 0; z < raw.vin.length; ++z) {
+			const vin = raw.vin[z];
+			if (!vin.coinbase) {
+				// txid, vout -> value, hex_ref, utxo_id
+				const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout, false);
+				utxos.push(utxo);
+				const satoshi = util.bitcoinToSatoshi(utxo.value);
+				if (satoshi > 0) {
+					await explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi);
+				}
+				await explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid);
 			}
-			await explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid);
 		}
-	}
-	if (bulks.hex.length > 0) {
-		await bulks.hex.execute();
-	}
-	if (bulks.utxo.length > 0) {
-		await bulks.utxo.execute();
+		if (bulks.hex.length > 0) {
+			await bulks.hex.execute();
+		}
+		if (bulks.utxo.length > 0) {
+			await bulks.utxo.execute();
+		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
 };
