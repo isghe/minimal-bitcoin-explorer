@@ -45,6 +45,12 @@ db.block.aggregate([
 	}}
 ])
 
+db.address.aggregate([{$match: {'address.address': '18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB'}}])
+db.address.find({'address.address': '18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB', 'address.spk_type_ref':{$ne:null}})
+
+db.address.find({"address.address": "18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB", "address.spk_type_ref":ObjectId("5c7be2bd9ff76bb9d5a776ee")})
+
+
 db.test.aggregate([
     {$match: {'shapes.color': 'red'}},
     {$project: {
