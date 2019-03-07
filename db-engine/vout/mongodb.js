@@ -162,7 +162,32 @@ const mongodbVout = async () => {
 					}
 				}, {upsert: true});
 				return {};
+			},
+
+			initializeUnorderedBulkOp: async () => {
+				const result = await clientDb.collection('address').initializeUnorderedBulkOp();
+				return result;
+			},
+
+			upsertBulk: async (bulk, address, hex_ref) => {
+			// address = {address, spk_type_ref}
+				assert(typeof address !== 'undefined');
+				assert(typeof address.address !== 'undefined');
+				assert(typeof address.spk_type_ref !== 'undefined');
+				assert(typeof hex_ref !== 'undefined');
+
+				await bulk.find({address, hex_ref}).upsert().updateOne({
+					$inc: {
+						counter: 1
+					},
+					$set: {
+						address, // {address, spk_type_ref}
+						hex_ref
+					}
+				});
+				return {};
 			}
+
 		},
 
 		utxo: {
@@ -195,6 +220,17 @@ const mongodbVout = async () => {
 			initializeUnorderedBulkOp: async () => {
 				const result = await clientDb.collection('utxo').initializeUnorderedBulkOp();
 				return result;
+			},
+
+			insertBulk: async (bulk, txid, vout, value, hex_ref) => {
+			// check also db.collection.bulkWrite()
+				await bulk.insert({
+					txid,
+					vout,
+					value,
+					hex_ref,
+					spent: false
+				});
 			},
 
 			updateSpentBulk: async (bulk, id, txid) => {
