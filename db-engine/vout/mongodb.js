@@ -127,7 +127,7 @@ const mongodbVout = async () => {
 			},
 
 			initializeUnorderedBulkOp: async () => {
-				const result = await clientDb.collection('utxo').initializeUnorderedBulkOp();
+				const result = await clientDb.collection('hex').initializeUnorderedBulkOp();
 				return result;
 			},
 

@@ -98,10 +98,14 @@ const handleTransaction = async raw => {
 			}
 		}
 		if (bulks.hex.length > 0) {
-			await bulks.hex.execute();
+			const res = await bulks.hex.execute();
+			assert (typeof res !== 'undefined');
+			assert (res.nModified === bulks.hex.length);
 		}
 		if (bulks.utxo.length > 0) {
-			await bulks.utxo.execute();
+			const res = await bulks.utxo.execute();
+			assert (typeof res !== 'undefined');
+			assert (res.nModified === bulks.utxo.length);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
