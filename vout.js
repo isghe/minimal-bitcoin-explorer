@@ -69,17 +69,20 @@ const handleTransaction = async raw => {
 		// });
 
 		if (bulks.address.length > 0) {
-			await bulks.address.execute();
+			const res = await bulks.address.execute();
+			assert(typeof res !== 'undefined');
+			assert(res.nModified === bulks.address.length);
 		}
 		if (bulks.utxo.length > 0) {
-			await bulks.utxo.execute();
+			const res = await bulks.utxo.execute();
+			assert(typeof res !== 'undefined');
+			assert(res.nModified === bulks.utxo.length);
 		}
 	}
 	profile.db.vout.increment(voutCrono.delta());
 
 	const vinCrono = new util.Crono();
 	{
-		const utxos = [];
 		const bulks = {
 			hex: await explore.db.vout.hex.initializeUnorderedBulkOp(),
 			utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp()
@@ -89,7 +92,6 @@ const handleTransaction = async raw => {
 			if (!vin.coinbase) {
 				// txid, vout -> value, hex_ref, utxo_id
 				const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout, false);
-				utxos.push(utxo);
 				const satoshi = util.bitcoinToSatoshi(utxo.value);
 				if (satoshi > 0) {
 					await explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi);
@@ -99,13 +101,13 @@ const handleTransaction = async raw => {
 		}
 		if (bulks.hex.length > 0) {
 			const res = await bulks.hex.execute();
-			assert (typeof res !== 'undefined');
-			assert (res.nModified === bulks.hex.length);
+			assert(typeof res !== 'undefined');
+			assert(res.nModified === bulks.hex.length);
 		}
 		if (bulks.utxo.length > 0) {
 			const res = await bulks.utxo.execute();
-			assert (typeof res !== 'undefined');
-			assert (res.nModified === bulks.utxo.length);
+			assert(typeof res !== 'undefined');
+			assert(res.nModified === bulks.utxo.length);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
