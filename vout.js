@@ -28,6 +28,11 @@ const profile = {
 	'tx/s': null // new util.DeltaSigma(0, 0)
 };
 
+const getTotalInvolved = res => {
+	assert(typeof res !== 'undefined');
+	return res.nInserted + res.nUpserted + res.nModified;
+};
+
 const handleTransaction = async raw => {
 	assert(typeof raw !== 'undefined');
 
@@ -71,12 +76,12 @@ const handleTransaction = async raw => {
 		if (bulks.address.length > 0) {
 			const res = await bulks.address.execute();
 			assert(typeof res !== 'undefined');
-			assert(res.nModified === bulks.address.length);
+			assert(getTotalInvolved(res) === bulks.address.length);
 		}
 		if (bulks.utxo.length > 0) {
 			const res = await bulks.utxo.execute();
 			assert(typeof res !== 'undefined');
-			assert(res.nModified === bulks.utxo.length);
+			assert(getTotalInvolved(res) === bulks.utxo.length);
 		}
 	}
 	profile.db.vout.increment(voutCrono.delta());
@@ -102,12 +107,12 @@ const handleTransaction = async raw => {
 		if (bulks.hex.length > 0) {
 			const res = await bulks.hex.execute();
 			assert(typeof res !== 'undefined');
-			assert(res.nModified === bulks.hex.length);
+			assert(getTotalInvolved(res) === bulks.hex.length);
 		}
 		if (bulks.utxo.length > 0) {
 			const res = await bulks.utxo.execute();
 			assert(typeof res !== 'undefined');
-			assert(res.nModified === bulks.utxo.length);
+			assert(getTotalInvolved(res) === bulks.utxo.length);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
