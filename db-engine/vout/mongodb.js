@@ -42,6 +42,8 @@ const mongodbVout = async () => {
 	await createIndexes('hex', hexIndexes);
 
 	const utxoIndexes = [
+		// cannot be unique e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468
+		// https://github.com/isghe/interesting-bitcoin-data#bip-30
 		{index: {txid: -1, vout: -1}}
 	];
 	await createIndexes('utxo', utxoIndexes);
