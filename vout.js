@@ -55,9 +55,10 @@ const handleTransaction = async raw => {
 
 	const voutCrono = new util.Crono();
 	{
+		const bulksArray = await Promise.all([explore.db.vout.utxo.initializeUnorderedBulkOp(), explore.db.vout.address.initializeUnorderedBulkOp()]);
 		const bulks = {
-			utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp(),
-			address: await explore.db.vout.address.initializeUnorderedBulkOp()
+			utxo: bulksArray[0],
+			address: bulksArray[1]
 		};
 		for (let i = 0; i < raw.vout.length; ++i) {
 		// await raw.vout.forEach(async vout => {
@@ -95,9 +96,10 @@ const handleTransaction = async raw => {
 
 	const vinCrono = new util.Crono();
 	{
+		const bulksArray = await Promise.all([explore.db.vout.hex.initializeUnorderedBulkOp(), explore.db.vout.utxo.initializeUnorderedBulkOp()]);
 		const bulks = {
-			hex: await explore.db.vout.hex.initializeUnorderedBulkOp(),
-			utxo: await explore.db.vout.utxo.initializeUnorderedBulkOp()
+			hex: bulksArray[0],
+			utxo: bulksArray[1]
 		};
 		for (let z = 0; z < raw.vin.length; ++z) {
 			const vin = raw.vin[z];
