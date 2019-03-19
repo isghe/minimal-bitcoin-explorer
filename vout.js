@@ -104,6 +104,8 @@ const handleTransaction = async raw => {
 			hex: bulksArray[0],
 			utxo: bulksArray[1]
 		};
+
+		const promises = [];
 		for (let z = 0; z < raw.vin.length; ++z) {
 			const vin = raw.vin[z];
 			if (!vin.coinbase) {
@@ -111,12 +113,12 @@ const handleTransaction = async raw => {
 				const utxo = await explore.db.vout.utxo.select(vin.txid, vin.vout, false);
 				const satoshi = util.bitcoinToSatoshi(utxo.value);
 				if (satoshi > 0) {
-					await explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi);
+					promises.push(explore.db.vout.hex.updateIncrementBulk(bulks.hex, utxo.hex_ref, satoshi));
 				}
-				await explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid);
+				promises.push(explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid));
 			}
 		}
-
+		await Promise.all(promises);
 		await handleBulkPromiseExecute(bulks);
 	}
 	profile.db.vin.increment(vinCrono.delta());
