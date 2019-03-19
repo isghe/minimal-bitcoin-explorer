@@ -49,7 +49,12 @@ db.address.aggregate([{$match: {'address.address': '18jANvQ6AuVGJnea4EhmXiAf6bHR
 db.address.find({'address.address': '18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB', 'address.spk_type_ref':{$ne:null}})
 
 db.address.find({"address.address": "18jANvQ6AuVGJnea4EhmXiAf6bHR5qKjPB", "address.spk_type_ref":ObjectId("5c7be2bd9ff76bb9d5a776ee")})
+db.address.find({"address.address": "1CR5wpkx8tsJYj39bvbj9fyiJEuwYLBQrn", "address.spk_type_ref":ObjectId("5c892ae69ff76bb9d5d3acac")})
+db.address.find({hex_ref: ObjectId("5c90e59043c5244e7a7ece19")});
 
+// ok index
+db.address.find({address: {address: "1CR5wpkx8tsJYj39bvbj9fyiJEuwYLBQrn", spk_type_ref:ObjectId("5c892ae69ff76bb9d5d3acac")}});
+db.hex.find ({_id: ObjectId("5c90e59043c5244e7a7ece19")});
 
 db.test.aggregate([
     {$match: {'shapes.color': 'red'}},
