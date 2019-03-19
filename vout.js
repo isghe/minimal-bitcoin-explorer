@@ -33,6 +33,23 @@ const getTotalInvolved = res => {
 	return res.nInserted + res.nUpserted + res.nModified;
 };
 
+const handleBulkPromise = async bulks => {
+	const promises = [];
+	Object.keys(bulks).forEach(key => {
+		if (bulks[key].length > 0) {
+			promises.push({length: bulks[key].length, promise: bulks[key].execute(), key});
+		}
+	});
+
+	const response = await Promise.all(promises.map(el => {
+		return el.promise;
+	}));
+
+	for (let i1 = 0; i1 < response.length; ++i1) {
+		assert(getTotalInvolved(response[i1]) === promises[i1].length);
+	}
+};
+
 const handleTransaction = async raw => {
 	assert(typeof raw !== 'undefined');
 
@@ -72,19 +89,7 @@ const handleTransaction = async raw => {
 			}
 		}
 		// });
-		const promises = [];
-		if (bulks.address.length > 0) {
-			promises.push({length: bulks.address.length, promise: bulks.address.execute()});
-		}
-		if (bulks.utxo.length > 0) {
-			promises.push({length: bulks.utxo.length, promise: bulks.utxo.execute()});
-		}
-		const response = await Promise.all(promises.map(el => {
-			return el.promise;
-		}));
-		for (let i1 = 0; i1 < response.length; ++i1) {
-			assert(getTotalInvolved(response[i1]) === promises[i1].length);
-		}
+		await handleBulkPromise(bulks);
 	}
 	profile.db.vout.increment(voutCrono.delta());
 
@@ -107,19 +112,7 @@ const handleTransaction = async raw => {
 			}
 		}
 
-		const promises = [];
-		if (bulks.hex.length > 0) {
-			promises.push({length: bulks.hex.length, promise: bulks.hex.execute()});
-		}
-		if (bulks.utxo.length > 0) {
-			promises.push({length: bulks.utxo.length, promise: bulks.utxo.execute()});
-		}
-		const response = await Promise.all(promises.map(el => {
-			return el.promise;
-		}));
-		for (let i1 = 0; i1 < response.length; ++i1) {
-			assert(getTotalInvolved(response[i1]) === promises[i1].length);
-		}
+		await handleBulkPromise(bulks);
 	}
 	profile.db.vin.increment(vinCrono.delta());
 };
