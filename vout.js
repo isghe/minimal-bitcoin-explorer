@@ -60,6 +60,8 @@ const handleTransaction = async raw => {
 			utxo: bulksArray[0],
 			address: bulksArray[1]
 		};
+
+		const promises = [];
 		for (let i = 0; i < raw.vout.length; ++i) {
 		// await raw.vout.forEach(async vout => {
 			const vout = raw.vout[i];
@@ -80,16 +82,17 @@ const handleTransaction = async raw => {
 				hex_ref = await explore.db.vout.hex.getCachedRefByHashIf(hash);
 			}
 
-			await explore.db.vout.utxo.insertBulk(bulks.utxo, raw.txid, vout.n, vout.value, hex_ref);
+			promises.push(explore.db.vout.utxo.insertBulk(bulks.utxo, raw.txid, vout.n, vout.value, hex_ref));
 
 			if (vout.scriptPubKey.addresses) {
 				for (let j = 0; j < vout.scriptPubKey.addresses.length; ++j) {
 					const address = vout.scriptPubKey.addresses[j];
-					await explore.db.vout.address.upsertBulk(bulks.address, {address, spk_type_ref}, hex_ref);
+					promises.push(explore.db.vout.address.upsertBulk(bulks.address, {address, spk_type_ref}, hex_ref));
 				}
 			}
 		}
 		// });
+		await Promise.all(promises);
 		await handleBulkPromiseExecute(bulks);
 	}
 	profile.db.vout.increment(voutCrono.delta());
