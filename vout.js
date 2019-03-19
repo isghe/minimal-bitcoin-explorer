@@ -72,16 +72,18 @@ const handleTransaction = async raw => {
 			}
 		}
 		// });
-
+		const promises = [];
 		if (bulks.address.length > 0) {
-			const res = await bulks.address.execute();
-			assert(typeof res !== 'undefined');
-			assert(getTotalInvolved(res) === bulks.address.length);
+			promises.push({length: bulks.address.length, promise: bulks.address.execute()});
 		}
 		if (bulks.utxo.length > 0) {
-			const res = await bulks.utxo.execute();
-			assert(typeof res !== 'undefined');
-			assert(getTotalInvolved(res) === bulks.utxo.length);
+			promises.push({length: bulks.utxo.length, promise: bulks.utxo.execute()});
+		}
+		const response = await Promise.all(promises.map(el => {
+			return el.promise;
+		}));
+		for (let i1 = 0; i1 < response.length; ++i1) {
+			assert(getTotalInvolved(response[i1]) === promises[i1].length);
 		}
 	}
 	profile.db.vout.increment(voutCrono.delta());
@@ -104,15 +106,19 @@ const handleTransaction = async raw => {
 				await explore.db.vout.utxo.updateSpentBulk(bulks.utxo, utxo._id, raw.txid);
 			}
 		}
+
+		const promises = [];
 		if (bulks.hex.length > 0) {
-			const res = await bulks.hex.execute();
-			assert(typeof res !== 'undefined');
-			assert(getTotalInvolved(res) === bulks.hex.length);
+			promises.push({length: bulks.hex.length, promise: bulks.hex.execute()});
 		}
 		if (bulks.utxo.length > 0) {
-			const res = await bulks.utxo.execute();
-			assert(typeof res !== 'undefined');
-			assert(getTotalInvolved(res) === bulks.utxo.length);
+			promises.push({length: bulks.utxo.length, promise: bulks.utxo.execute()});
+		}
+		const response = await Promise.all(promises.map(el => {
+			return el.promise;
+		}));
+		for (let i1 = 0; i1 < response.length; ++i1) {
+			assert(getTotalInvolved(response[i1]) === promises[i1].length);
 		}
 	}
 	profile.db.vin.increment(vinCrono.delta());
