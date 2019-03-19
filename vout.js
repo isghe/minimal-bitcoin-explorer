@@ -33,7 +33,7 @@ const getTotalInvolved = res => {
 	return res.nInserted + res.nUpserted + res.nModified;
 };
 
-const handleBulkPromise = async bulks => {
+const handleBulkPromiseExecute = async bulks => {
 	const promises = [];
 	Object.keys(bulks).forEach(key => {
 		if (bulks[key].length > 0) {
@@ -89,7 +89,7 @@ const handleTransaction = async raw => {
 			}
 		}
 		// });
-		await handleBulkPromise(bulks);
+		await handleBulkPromiseExecute(bulks);
 	}
 	profile.db.vout.increment(voutCrono.delta());
 
@@ -112,7 +112,7 @@ const handleTransaction = async raw => {
 			}
 		}
 
-		await handleBulkPromise(bulks);
+		await handleBulkPromiseExecute(bulks);
 	}
 	profile.db.vin.increment(vinCrono.delta());
 };
